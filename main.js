@@ -1,5 +1,4 @@
-
-document.getElementById('registrationForm').addEventListener('submit', function(e) {
+document.getElementById('registrationForm').addEventListener('submit', async function (e) {
   e.preventDefault();
 
   let hasError = false;
@@ -18,6 +17,8 @@ document.getElementById('registrationForm').addEventListener('submit', function(
   const telefono = document.getElementById("telefono").value.trim();
   const email = document.getElementById("email").value.trim();
   const direccion = document.getElementById("direccion").value.trim();
+  const comentarios = document.getElementById("comentarios").value.trim();
+  const lista = new URLSearchParams(window.location.search).get("lista") || "no definida";
 
   if (nombre.length < 2) showError("error-nombre", "Nombre inválido.");
   if (apellido.length < 2) showError("error-apellido", "Apellido inválido.");
@@ -28,7 +29,38 @@ document.getElementById('registrationForm').addEventListener('submit', function(
   if (direccion.length < 3) showError("error-direccion", "Dirección inválida.");
 
   if (!hasError) {
-    document.getElementById("modal").classList.remove("hidden");
+    const fullTelefono = `549${codArea}${telefono}`;
+
+    const payload = {
+      nombre,
+      apellido,
+      dni,
+      telefono: fullTelefono,
+      email,
+      direccion,
+      comentarios,
+      zona: "Pendiente",
+      lista,
+      estado: "a revisar"
+    };
+
+    try {
+      const res = await fetch("https://script.google.com/macros/s/AKfycbzc5KINp4pwL4AoQZCyN3yhmDADiz0H6rTHXRYHPPyNdIz8eb99WmWU8o0RY9qityigeg/exec", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        document.getElementById("modal").classList.remove("hidden");
+      } else {
+        alert(result.message || "Error al registrar.");
+      }
+
+    } catch (err) {
+      alert("Error de conexión.");
+    }
   }
 });
 
