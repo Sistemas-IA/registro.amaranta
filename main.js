@@ -1,4 +1,3 @@
-
 document.getElementById('registrationForm').addEventListener('submit', async function (e) {
   e.preventDefault();
 
@@ -19,7 +18,10 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
   const email = document.getElementById("email").value.trim();
   const direccion = document.getElementById("direccion").value.trim();
   const comentarios = document.getElementById("comentarios").value.trim();
-  const lista = new URLSearchParams(window.location.search).get("lista") || "no definida";
+
+  const params = new URLSearchParams(window.location.search);
+  const lista = params.get("l") || "no definida";
+  window.history.replaceState({}, document.title, window.location.pathname); // Limpia la URL
 
   if (nombre.length < 2) showError("error-nombre", "Nombre inválido.");
   if (apellido.length < 2) showError("error-apellido", "Apellido inválido.");
@@ -41,9 +43,7 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
         nombre, apellido, dni,
         telefono: fullTelefono,
         email, direccion, comentarios,
-        zona: "Pendiente",
-        lista,
-        estado: "a revisar",
+        l: lista, // nuevo campo en lugar de lista
         ip
       };
 
