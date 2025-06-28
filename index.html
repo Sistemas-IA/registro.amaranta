@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dejanos tus datos</title>
+  <link href="style.css" rel="stylesheet" />
+</head>
+<body>
+  <div class="background"></div>
+  <main class="form-wrapper">
+    <header class="header">
+      <img src="img/header.png" alt="Encabezado Amaranta" class="header-img" />
+      
+    </header>
+    
+    <form id="registrationForm" novalidate>
+      <input type="text" name="nombre" minlength="2" maxlength="40" required id="nombre" placeholder="Nombre *" />
+      <p class="error-msg" id="error-nombre"></p>
+
+      <input type="text" name="apellido" minlength="2" maxlength="40" required id="apellido" placeholder="Apellido *" />
+      <p class="error-msg" id="error-apellido"></p>
+
+      <input type="text" name="dni" pattern="\d{7,9}" required id="dni" placeholder="DNI (sin puntos) *" />
+      <p class="error-msg" id="error-dni"></p>
+
+      <div class="phone-group">
+        <input type="text" name="codArea" pattern="\d{2,5}" required id="codArea" placeholder="Cód. área (sin 0) *" />
+        <input type="text" name="telefono" pattern="\d{6,10}" required id="telefono" placeholder="Número celular (sin 15) *" />
+      </div>
+      <p class="error-msg" id="error-celular"></p>
+
+      <input type="email" name="email" maxlength="60" required id="email" placeholder="Email *" />
+      <p class="error-msg" id="error-email"></p>
+
+      <input type="text" name="direccion" minlength="3" maxlength="80" required id="direccion" placeholder="Dirección de entrega *" />
+      <p class="error-msg" id="error-direccion"></p>
+
+      <textarea name="comentarios" id="comentarios" placeholder="Agregá todos los detalles para que tu pedido llegue correctamente (opcional)" maxlength="200"></textarea>
+
+      <button type="submit">Registrarse</button>
+    </form>
+    <div id="modal" class="modal hidden">
+      <div class="modal-content">
+        <p class="success-message">¡Gracias por registrarte!</p>
+        <button class="close-button" onclick="closeModal()">Cerrar</button>
+      </div>
+    </div>
+  </main>
+  <script src="main.js"></script>
+</body>
+</html>
