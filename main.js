@@ -47,7 +47,7 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
         ip
       };
 
-      const res = await fetch("https://script.google.com/macros/s/AKfycbzLALjHRxSx-8YG9XM8uIBZkCOSeESZSxZ5AAjb1oAN_4Ji_o7KAXnu9EtSxh2uA2Fc9Q/exec", {
+      const res = await fetch("https://script.google.com/macros/s/AKfycbzkX1QWSto_VXfHQKAlQLbQOTxbYz18BA1-sCtNQOEQFYASM3YLYMZLSNfy61NF_-iFmA/exec", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
