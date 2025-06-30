@@ -21,44 +21,36 @@
       <input type="text" name="apellido" minlength="2" maxlength="40" required id="apellido" placeholder="Apellido *" />
       <p class="error-msg" id="error-apellido"></p>
 
-      <input type="text" name="dni" pattern="\d{7,9}" required id="dni" placeholder="DNI (sin puntos) *" />
+      <input type="text" name="dni" pattern="\d{8}" maxlength="8" required id="dni" placeholder="DNI (sin puntos) *" />
       <p class="error-msg" id="error-dni"></p>
 
-      <div class="phone-group">
-        <input type="text" name="codArea" pattern="\d{2,5}" required id="codArea" placeholder="Cód. área (sin 0) *" />
-        <input type="text" name="telefono" pattern="\d{6,10}" required id="telefono" placeholder="Número celular (sin 15) *" />
+      <div class="phone-wrapper">
+        <input type="text" name="codArea" maxlength="4" required id="codArea" placeholder="Cód. área *" />
+        <input type="text" name="telefono" maxlength="8" required id="telefono" placeholder="Teléfono *" />
       </div>
-      <p class="error-msg" id="error-celular"></p>
+      <p class="error-msg" id="error-telefono"></p>
 
-      <input type="email" name="email" maxlength="60" required id="email" placeholder="Email *" />
+      <input type="email" name="email" maxlength="100" required id="email" placeholder="Correo electrónico *" />
       <p class="error-msg" id="error-email"></p>
 
-      <input type="text" name="direccion" minlength="3" maxlength="80" required id="direccion" placeholder="Dirección de entrega *" />
+      <input type="text" name="direccion" minlength="3" maxlength="120" required id="direccion" placeholder="Dirección de entrega *" />
       <p class="error-msg" id="error-direccion"></p>
 
-      <textarea name="comentarios" id="comentarios" placeholder="Agregá todos los detalles para que tu pedido llegue correctamente (opcional)" maxlength="200"></textarea>
+      <textarea name="comentarios" id="comentarios" maxlength="200" placeholder="Comentarios (opcional)"></textarea>
 
-      <input type="hidden" name="l" id="lista" />
+      <button type="submit" id="submitBtn">Registrarse</button>
 
-      <button type="submit" id="submit-button">Registrarse</button>
-      <div id="loader" class="loader hidden"></div>
+      <div class="spinner" id="spinner"></div>
     </form>
-
-    <div id="overlay" class="overlay hidden"></div>
   </main>
 
-  <!-- Modal reubicado fuera del main para evitar desenfoque -->
   <div id="modal" class="modal hidden">
     <div class="modal-content">
-      <p id="modal-text">¡Gracias por registrarte!</p>
-      <button class="close-button primary" onclick="closeModal()">Cerrar</button>
+      <p id="modal-message"></p>
+      <button onclick="closeModal()">Aceptar</button>
     </div>
   </div>
 
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    document.getElementById("lista").value = params.get("l") || "no definida";
-  </script>
   <script src="main.js"></script>
 </body>
 </html>
