@@ -6,7 +6,7 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
     nombre: form.nombre.value.trim(),
     apellido: form.apellido.value.trim(),
     dni: form.dni.value.trim(),
-    telefono: "549" + form.codArea.value.trim() + form.telefono.value.trim(), // código + número
+    telefono: "549" + form.codArea.value.trim() + form.telefono.value.trim(),
     email: form.email.value.trim(),
     direccion: form.direccion.value.trim(),
     comentarios: form.comentarios.value.trim(),
@@ -22,23 +22,19 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
   if (!regexDNI.test(datos.dni)) return alert("DNI inválido.");
   if (!regexTel.test(datos.telefono)) return alert("Teléfono inválido.");
   if (!regexEmail.test(datos.email) || datos.email.length > 60) return alert("Email inválido.");
-  if (datos.extra !== "") return; // Honeypot detectado
+  if (datos.extra !== "") return; // Honeypot activado (bot)
 
   try {
-    const res = await fetch("https://script.google.com/macros/s/AKfycbwUhBpbonzmEhtCtfdA9W97sWnXDwcCagMT7wsR7nU5GQjDgzlrGe-cWlFkg6JyKoBFJg/exec", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(datos)
-    });
+    const params = new URLSearchParams(datos).toString();
+    const url = "https://script.google.com/macros/s/AKfycbwxV7XSToS9PpyeESpA2qP1StyhGQiY2Pdlz8yYITjM50KeogrIacQgHaQiubdjNskN/exec?" + params;
 
-    const texto = await res.text();
-    console.log("Respuesta del backend:", texto); // 👀 útil para depurar
+    const res = await fetch(url);
+    const resultado = await res.json();
 
-    const resultado = JSON.parse(texto);
     alert(resultado.mensaje || "Registro completo.");
     form.reset();
   } catch (err) {
-    console.error("Error al enviar:", err.message || err);
+    console.error("Error al enviar:", err);
     alert("Error al enviar. Intentá más tarde.");
   }
 });
