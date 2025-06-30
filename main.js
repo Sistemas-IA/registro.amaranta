@@ -6,7 +6,7 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
     nombre: form.nombre.value.trim(),
     apellido: form.apellido.value.trim(),
     dni: form.dni.value.trim(),
-    telefono: "549" + form.codArea.value.trim() + form.telefono.value.trim(), // ✅ teléfono combinado
+    telefono: "549" + form.codArea.value.trim() + form.telefono.value.trim(), // código + número
     email: form.email.value.trim(),
     direccion: form.direccion.value.trim(),
     comentarios: form.comentarios.value.trim(),
@@ -25,20 +25,20 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
   if (datos.extra !== "") return; // Honeypot detectado
 
   try {
-    const res = await fetch("https://script.google.com/macros/s/AKfycbzogA91RRSzu9zBVAUL5vBh6IR-rGpPPgEOtHTebVpU_zEbFQILMmmXGZZkrmsF9HXojA/exec", {
+    const res = await fetch("https://script.google.com/macros/s/AKfycbwUhBpbonzmEhtCtfdA9W97sWnXDwcCagMT7wsR7nU5GQjDgzlrGe-cWlFkg6JyKoBFJg/exec", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(datos)
     });
 
     const texto = await res.text();
-    console.log("Respuesta del backend:", texto); // 👀 para depurar
+    console.log("Respuesta del backend:", texto); // 👀 útil para depurar
 
     const resultado = JSON.parse(texto);
     alert(resultado.mensaje || "Registro completo.");
     form.reset();
   } catch (err) {
-    console.error("Error al enviar:", err);
+    console.error("Error al enviar:", err.message || err);
     alert("Error al enviar. Intentá más tarde.");
   }
 });
