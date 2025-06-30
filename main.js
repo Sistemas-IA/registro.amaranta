@@ -27,7 +27,7 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
 
   try {
     const params = new URLSearchParams(datos).toString();
-    const url = "https://script.google.com/macros/s/AKfycbyQKE_7ZjPYEmVKEYbFn35s1Eij88-ELkjxS05EHY1VGvjkak9RGb4UmPu8REAC7iK9HQ/exec?" + params;
+    const url = "https://script.google.com/macros/s/AKfycbyVPZ2VnTrDT-3_96zTKowP1hiGKB7whaEj7wKZm4LU7S-jcyjT_10jSfLwGxhZHZ26Bw/exec?" + params;
 
     const res = await fetch(url);
     const resultado = await res.json();
