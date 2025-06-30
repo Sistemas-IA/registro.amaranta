@@ -6,7 +6,7 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
     nombre: form.nombre.value.trim(),
     apellido: form.apellido.value.trim(),
     dni: form.dni.value.trim(),
-    telefono: form.telefono.value.trim(),
+    telefono: "549" + form.codArea.value.trim() + form.telefono.value.trim(), // ✅ teléfono combinado
     email: form.email.value.trim(),
     direccion: form.direccion.value.trim(),
     comentarios: form.comentarios.value.trim(),
@@ -32,7 +32,7 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
     });
 
     const texto = await res.text();
-    console.log("Respuesta del backend:", texto); // 👈 importante para ver qué pasa
+    console.log("Respuesta del backend:", texto); // 👀 para depurar
 
     const resultado = JSON.parse(texto);
     alert(resultado.mensaje || "Registro completo.");
