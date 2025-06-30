@@ -81,11 +81,15 @@ function ocultarSpinner() {
 
 function mostrarModal(msg) {
   document.getElementById("modal-message").textContent = msg;
-  document.getElementById("modal").classList.remove("hidden");
+  const modal = document.getElementById("modal");
+  modal.classList.remove("hidden");
+  modal.classList.add("active");
 }
 
 function closeModal() {
-  document.getElementById("modal").classList.add("hidden");
+  const modal = document.getElementById("modal");
+  modal.classList.add("hidden");
+  modal.classList.remove("active");
 }
 
 async function obtenerIP() {
