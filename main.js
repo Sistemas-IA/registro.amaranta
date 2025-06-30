@@ -31,10 +31,14 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
       body: JSON.stringify(datos)
     });
 
-    const resultado = await res.json();
+    const texto = await res.text();
+    console.log("Respuesta del backend:", texto); // 👈 importante para ver qué pasa
+
+    const resultado = JSON.parse(texto);
     alert(resultado.mensaje || "Registro completo.");
     form.reset();
   } catch (err) {
+    console.error("Error al enviar:", err);
     alert("Error al enviar. Intentá más tarde.");
   }
 });
