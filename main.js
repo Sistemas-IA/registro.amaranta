@@ -25,7 +25,7 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
   if (datos.extra !== "") return; // Honeypot detectado
 
   try {
-    const res = await fetch("https://script.google.com/macros/s/AKfycbx/exec", {
+    const res = await fetch("https://script.google.com/macros/s/AKfycbzogA91RRSzu9zBVAUL5vBh6IR-rGpPPgEOtHTebVpU_zEbFQILMmmXGZZkrmsF9HXojA/exec", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(datos)
