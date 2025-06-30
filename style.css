@@ -1,0 +1,179 @@
+
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: url('img/fondo.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
+
+::placeholder {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.form-wrapper {
+  background: #ffffffee;
+  max-width: 600px;
+  margin: 2rem auto;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.header {
+  position: relative;
+}
+
+.header-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.logo-img {
+  width: 120px;
+  position: absolute;
+  bottom: -40px;
+  right: 30px;
+  border-radius: 50%;
+  background: white;
+  padding: 0.5rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+main h1 {
+  text-align: center;
+  color: #2f4f3f;
+  margin: 80px 1rem 1rem;
+  font-size: 1.5rem;
+}
+
+form {
+  padding: 0 2rem 2rem;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-family: 'Poppins', sans-serif;
+}
+
+.phone-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+#codArea {
+  width: 35%;
+}
+
+#telefono {
+  width: 65%;
+}
+
+.error-msg {
+  color: red;
+  font-size: 0.85rem;
+  margin: 0.25rem 0 0;
+}
+
+button[type="submit"] {
+  background-color: #2f4f3f;
+  color: white;
+  border: none;
+  padding: 1rem;
+  font-size: 1.1rem;
+  margin-top: 1rem;
+  width: 100%;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.modal {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  text-align: center;
+  border-radius: 1rem;
+  max-width: 90%;
+  font-family: 'Poppins', sans-serif;
+}
+
+.success-message {
+  font-size: 1.3rem;
+  color: #2f4f3f;
+  margin-bottom: 1rem;
+}
+
+.close-button {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  background-color: #2f4f3f;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Estilos nuevos agregados */
+
+.primary {
+  background-color: #2f4f3f;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.5);
+  z-index: 10;
+}
+
+.modal {
+  z-index: 20;
+}
+
+.blur {
+  filter: blur(4px);
+}
+
+/* Loader animado */
+.loader {
+  margin: 1rem auto 0;
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #2f4f3f;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
