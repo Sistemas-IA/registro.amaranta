@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dejanos tus datos</title>
+<link href="style.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="background"></div>
+<main class="form-wrapper" id="form-wrapper">
+<header class="header">
+<img alt="Encabezado Amaranta" class="header-img" src="img/header.png"/>
+</header>
+<form id="registrationForm" novalidate=""><input autocomplete="off" name="extra" style="display:none" type="text"/>
+<input id="nombre" maxlength="40" minlength="2" name="nombre" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s']{2,40}" placeholder="Nombre *" required="" type="text"/>
+<p class="error-msg" id="error-nombre"></p>
+<input id="apellido" maxlength="40" minlength="2" name="apellido" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s']{2,40}" placeholder="Apellido *" required="" type="text"/>
+<p class="error-msg" id="error-apellido"></p>
+<input id="dni" maxlength="8" name="dni" pattern="\d{8}" placeholder="DNI (sin puntos) *" required="" type="text"/>
+<p class="error-msg" id="error-dni"></p>
+<div class="phone-group">
+<input id="codArea" name="codArea" pattern="\d{2,5}" placeholder="Cód. área (sin 0) *" required="" type="text"/>
+<input id="telefono" maxlength="15" name="telefono" pattern="\d{10,15}" placeholder="Número celular (sin 15) *" required="" type="text"/>
+</div>
+<p class="error-msg" id="error-celular"></p>
+<input id="email" maxlength="60" name="email" placeholder="Email *" required="" type="email"/>
+<p class="error-msg" id="error-email"></p>
+<input id="direccion" maxlength="80" minlength="3" name="direccion" placeholder="Dirección de entrega *" required="" type="text"/>
+<p class="error-msg" id="error-direccion"></p>
+<textarea id="comentarios" maxlength="200" name="comentarios" placeholder="Agregá todos los detalles para que tu pedido llegue correctamente (opcional)"></textarea>
+<input id="lista" name="l" type="hidden"/>
+<button id="submit-button" type="submit">Registrarse</button>
+<div class="loader hidden" id="loader"></div>
+</form>
+<div class="overlay hidden" id="overlay"></div>
+</main>
+<!-- Modal reubicado fuera del main para evitar desenfoque -->
+<div class="modal hidden" id="modal">
+<div class="modal-content">
+<p id="modal-text">¡Gracias por registrarte!</p>
+<button class="close-button primary" onclick="closeModal()">Cerrar</button>
+</div>
+</div>
+<script>
+    const params = new URLSearchParams(window.location.search);
+    document.getElementById("lista").value = params.get("l") || "no definida";
+  </script>
+<script src="main.js"></script>
+</body>
+</html>
