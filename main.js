@@ -10,7 +10,8 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
     email: form.email.value.trim(),
     direccion: form.direccion.value.trim(),
     comentarios: form.comentarios.value.trim(),
-    extra: form.extra.value.trim()
+    extra: form.extra.value.trim(),
+    lista: form.lista?.value?.trim() || "no definida"
   };
 
   const regexNombre = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s']{2,40}$/;
@@ -26,7 +27,7 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
 
   try {
     const params = new URLSearchParams(datos).toString();
-    const url = "https://script.google.com/macros/s/AKfycbwxV7XSToS9PpyeESpA2qP1StyhGQiY2Pdlz8yYITjM50KeogrIacQgHaQiubdjNskN/exec?" + params;
+    const url = "https://script.google.com/macros/s/AKfycbyQKE_7ZjPYEmVKEYbFn35s1Eij88-ELkjxS05EHY1VGvjkak9RGb4UmPu8REAC7iK9HQ/exec?" + params;
 
     const res = await fetch(url);
     const resultado = await res.json();
