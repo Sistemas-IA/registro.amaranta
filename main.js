@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const btnSubmit = document.getElementById("btnSubmit");
 
   try {
-    const res = await fetch("https://script.google.com/macros/s/AKfycbwxV7XSToS9PpyeESpA2qP1StyhGQiY2Pdlz8yYITjM50KeogrIacQgHaQiubdjNskN/exec");
+    const res = await fetch("https://script.google.com/macros/s/AKfycby6QcUYeEgJv2B1EIZMTaFGM7b0slo7R06gH0vHHOTiahU8AIJ1-2K7RTXgZh8GvSpGDw/exec");
     const data = await res.json();
     if (data.token) {
       tokenInput.value = data.token;
