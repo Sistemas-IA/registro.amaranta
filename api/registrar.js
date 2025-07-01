@@ -1,5 +1,5 @@
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyc8nBRctGBM7jbEf3ob4-4rCBGLnD3U1jI4x_DQHvuwvoZikSHuoLVcB22gcOji5R8dA/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbz2Yr4CMxt3srnJlNsfRUDZOdcZJ7h9T43Q2Y7YSuK6MnT1CZtb_r_Rr3kMQ10wvXRxTQ/exec";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
