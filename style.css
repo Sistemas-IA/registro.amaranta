@@ -24,8 +24,7 @@ body {
   margin-bottom: 1rem;
 }
 
-.form-box input {
-  margin: 0 auto},
+.form-box input,
 .form-box textarea {
   width: 90%;
   padding: 0.8rem;
