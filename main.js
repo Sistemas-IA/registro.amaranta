@@ -26,8 +26,8 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
   if (!/^[0-9]{8}$/.test(dni)) showError("error-dni", "El DNI debe tener exactamente 8 dígitos.");
   if (nombre.length < 2) showError("error-nombre", "Nombre inválido.");
   if (apellido.length < 2) showError("error-apellido", "Apellido inválido.");
-  if (!/^[0-9]{2,5}$/.test(codArea)) showError("error-celular", "Código de área inválido.");
-  else if (!/^[0-9]{6,10}$/.test(telefono)) showError("error-celular", "Número celular inválido.");
+  if (!/^[0-9]{2,4}$/.test(codArea)) showError("error-celular", "Código de área inválido.");
+  else if (!/^[0-9]{8}$/.test(telefono)) showError("error-celular", "Número celular inválido.");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) showError("error-email", "Email inválido.");
   if (direccion.length < 3) showError("error-direccion", "Dirección inválida.");
 
