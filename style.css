@@ -27,7 +27,7 @@ body {
 .form-box input,
 .form-box textarea {
   width: 100%;
-  padding: 1rem;
+  padding: 2rem;
   margin-bottom: 0.5rem;
   border: 1px solid #ccc;
   border-radius: 8px;
