@@ -21,12 +21,12 @@
       <input type="text" name="apellido" minlength="2" maxlength="40" required id="apellido" placeholder="Apellido *" />
       <p class="error-msg" id="error-apellido"></p>
 
-      <input type="text" name="dni" pattern="\d{7,9}" required id="dni" placeholder="DNI (sin puntos) *" />
+      <input type="text" name="dni" pattern="\d{8}" required id="dni" placeholder="DNI (sin puntos) *" />
       <p class="error-msg" id="error-dni"></p>
 
       <div class="phone-group">
-        <input type="text" name="codArea" pattern="\d{2,5}" required id="codArea" placeholder="Cód. área (sin 0) *" />
-        <input type="text" name="telefono" pattern="\d{6,10}" required id="telefono" placeholder="Número celular (sin 15) *" />
+        <input type="text" name="codArea" pattern="\d{2,4}" required id="codArea" placeholder="Cód. área (sin 0) *" />
+        <input type="text" name="telefono" pattern="\d{8}" required id="telefono" placeholder="Número celular (sin 15) *" />
       </div>
       <p class="error-msg" id="error-celular"></p>
 
