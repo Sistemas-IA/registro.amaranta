@@ -36,7 +36,7 @@ body {
 }
 
 button[type="submit"] {
-  width: 100%;
+  width: 80%;
   padding: 0.75rem;
   background-color: #a41e34;
   color: white;
