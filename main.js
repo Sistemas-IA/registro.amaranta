@@ -51,7 +51,7 @@ form.addEventListener("submit", async (e) => {
     const el = document.getElementById(campo);
     const valor = sanitizar(el.value);
     if (!validarCampo(campo, valor)) {
-      document.getElementById("error-" + campo).textContent = "Dato requerido";
+      document.getElementById("error-" + campo).textContent = "Dato incorrecto";
       valido = false;
     } else {
       document.getElementById("error-" + campo).textContent = "";
@@ -63,7 +63,7 @@ form.addEventListener("submit", async (e) => {
   if (validarCampo("codArea", datos.codArea) && validarCampo("telefono", datos.telefono)) {
     datos.telefono = "549" + datos.codArea + datos.telefono;
   } else {
-    document.getElementById("error-telefono").textContent = "Teléfono incorrecto";
+    document.getElementById("error-telefono").textContent = "Dato incorrecto";
     valido = false;
   }
 
