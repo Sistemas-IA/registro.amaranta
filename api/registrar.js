@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch("https://script.google.com/macros/s/AKfycbw9iz_vkca6qT8NzKeHybVM0HvSYjs5B1AmqJpfB3xdciYsghA6yWKPo78MySb0Z6asOA/exec", {
+    const response = await fetch("https://script.google.com/macros/s/AKfycbzXMygGtUhEKxIR0a7uT7x5R2PRb42ObaSN5dc9Hay494ofoPazRa-fYSOyGRK7SFb8TA/exec", {
       method: "POST",
       body: JSON.stringify(datos),
       headers: {
