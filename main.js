@@ -1,137 +1,112 @@
-const form = document.getElementById('registrationForm');
-const boton = form.querySelector('button[type="submit"]');
-const modal = document.getElementById('modalExito');
+// ✅ main.js — versión completa con carga de token, limpieza de URL y envío final
 
-const campos = {
-  nombre: {
-    label: 'Nombre',
-    validar: valor => valor.trim().length >= 3 && valor.trim().length <= 40,
-    mensaje: 'El nombre debe tener entre 3 y 40 caracteres.'
-  },
-  apellido: {
-    label: 'Apellido',
-    validar: valor => valor.trim().length >= 3 && valor.trim().length <= 40,
-    mensaje: 'El apellido debe tener entre 3 y 40 caracteres.'
-  },
-  dni: {
-    label: 'DNI',
-    validar: valor => /^[0-9]{8}$/.test(valor),
-    mensaje: 'El DNI debe tener exactamente 8 dígitos numéricos.'
-  },
-  codArea: {
-    label: 'Código de área',
-    validar: valor => /^[0-9]{2,4}$/.test(valor),
-    mensaje: 'Código de área inválido (debe tener entre 2 y 4 dígitos).'
-  },
-  telefono: {
-    label: 'Teléfono',
-    validar: valor => /^[0-9]{8}$/.test(valor),
-    mensaje: 'El número de teléfono debe tener exactamente 8 dígitos.'
-  },
-  email: {
-    label: 'Email',
-    validar: valor => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor),
-    mensaje: 'Email inválido.'
-  },
-  direccion: {
-    label: 'Dirección',
-    validar: valor => valor.trim().length >= 3,
-    mensaje: 'La dirección debe tener al menos 3 caracteres.'
-  },
-  comentarios: {
-    label: 'Comentarios',
-    validar: valor => valor.length <= 200,
-    mensaje: 'Los comentarios no pueden superar los 200 caracteres.'
+window.addEventListener("DOMContentLoaded", async () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const listaParam = urlParams.get("l") || "";
+
+  try {
+    const respuesta = await fetch(
+      `https://script.google.com/macros/s/AKfycbyfxDdgdOebZKt77ylaYG1CuySomvGTOkEyyy3DEG7sMtM6PBd5Eg2gvpF4GW7kVtIN/exec?l=${encodeURIComponent(listaParam)}`
+    );
+    const data = await respuesta.json();
+
+    if (data.token && data.lista) {
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("lista", data.lista);
+
+      // Limpia la URL (quita ?l=...)
+      if (window.history.replaceState) {
+        const nuevaUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, nuevaUrl);
+      }
+    } else {
+      console.error("No se recibió token o lista válida");
+    }
+  } catch (error) {
+    console.error("Error al obtener token:", error);
   }
-};
+});
 
-function mostrarError(idCampo, mensaje) {
-  const errorElement = document.getElementById(`error-${idCampo}`);
-  if (errorElement) errorElement.textContent = mensaje;
-}
-
-function limpiarErrores() {
-  document.querySelectorAll('.error-msg').forEach(el => el.textContent = '');
-}
-
-function mostrarModalExito() {
-  if (modal) {
-    modal.classList.remove("hidden");
-    setTimeout(() => {
-      modal.classList.add("hidden");
-    }, 5000);
-  }
-}
-
-form.addEventListener('submit', async function (e) {
+document.getElementById("formulario").addEventListener("submit", async function (e) {
   e.preventDefault();
-  limpiarErrores();
 
+  const boton = document.getElementById("botonRegistro");
   boton.disabled = true;
-  const textoOriginal = boton.textContent;
   boton.textContent = "Enviando...";
 
-  let hasError = false;
-  const datos = {};
-  for (const id in campos) {
-    datos[id] = document.getElementById(id)?.value.trim() || "";
-  }
+  const token = localStorage.getItem("token");
+  const lista = localStorage.getItem("lista");
 
-  datos.telefonoCompleto = `+549${datos.codArea}${datos.telefono}`;
-  const comentarios = datos.comentarios;
+  const nombre = document.getElementById("nombre").value.trim();
+  const apellido = document.getElementById("apellido").value.trim();
+  const dni = document.getElementById("dni").value.trim();
+  const codigoArea = document.getElementById("codigoArea").value.trim();
+  const numeroCelular = document.getElementById("numeroCelular").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const direccion = document.getElementById("direccion").value.trim();
+  const comentarios = document.getElementById("comentarios").value.trim();
+  const zona = document.getElementById("zona").value.trim(); // honeypot
+  const estado = document.getElementById("estado").value.trim(); // honeypot
 
-  for (const campo in campos) {
-    if (!campos[campo].validar(datos[campo])) {
-      mostrarError(campo, campos[campo].mensaje);
-      hasError = true;
-    }
-  }
+  // Validaciones espejo
+  const errores = [];
 
-  if (hasError) {
+  if (nombre.length < 1 || nombre.length > 30) errores.push("Nombre inválido");
+  if (apellido.length < 1 || apellido.length > 30) errores.push("Apellido inválido");
+  if (!/^[0-9]{8}$/.test(dni)) errores.push("DNI inválido");
+  if (!/^[0-9]{2,4}$/.test(codigoArea)) errores.push("Código de área inválido");
+  if (!/^[0-9]{7,9}$/.test(numeroCelular)) errores.push("Número de celular inválido");
+  if (!email.includes("@")) errores.push("Email inválido");
+  if (direccion.length < 3) errores.push("Dirección inválida");
+  if (zona !== "") errores.push("Honeypot zona debe estar vacío");
+  if (estado !== "") errores.push("Honeypot estado debe estar vacío");
+  if (!token) errores.push("Token ausente");
+  if (!lista) errores.push("Lista ausente");
+
+  if (errores.length > 0) {
+    alert("Errores:\n" + errores.join("\n"));
     boton.disabled = false;
-    boton.textContent = textoOriginal;
+    boton.textContent = "Registrarse";
     return;
   }
 
-  const params = new URLSearchParams(window.location.search);
-  const lista = params.get("l") || "no definida";
+  const telefono = "549" + codigoArea + numeroCelular;
 
-  // TODO: implementar obtención real de token si se requiere
-  const token = "TOKEN_SEGURO_GENERADO";
-
-  const payload = {
-    nombre: datos.nombre,
-    apellido: datos.apellido,
-    dni: datos.dni,
-    telefono: datos.telefonoCompleto,
-    email: datos.email,
-    direccion: datos.direccion,
+  const datos = {
+    nombre,
+    apellido,
+    dni,
+    telefono,
+    email,
+    direccion,
     comentarios,
+    zona,
+    estado,
     lista,
-    honeypot: document.getElementById('extra')?.value || "",
     token
   };
 
   try {
-    const response = await fetch('/api/registrar.js', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+    const respuesta = await fetch("/api/registrar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(datos)
     });
 
-    const result = await response.json();
+    const resultado = await respuesta.json();
 
-    if (!result.success) {
-      alert(result.message || 'Error en el registro.');
+    if (resultado.success) {
+      alert("¡Registro exitoso!");
+      document.getElementById("formulario").reset();
     } else {
-      mostrarModalExito();
-      form.reset();
+      alert("Error: " + resultado.message);
     }
-  } catch (err) {
-    console.error('Error al registrar:', err);
-    alert('No se pudo conectar al servidor. Revisá tu conexión.');
-  } finally {
-    boton.disabled = false;
-    boton.textContent = textoOriginal;
+
+  } catch (error) {
+    alert("Error al enviar el formulario.");
+    console.error(error);
   }
+
+  boton.disabled = false;
+  boton.textContent = "Registrarse";
 });
