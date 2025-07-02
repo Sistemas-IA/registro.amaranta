@@ -4,7 +4,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   try {
     const respuesta = await fetch(
-      `https://script.google.com/macros/s/AKfycbyfxDdgdOebZKt77ylaYG1CuySomvGTOkEyyy3DEG7sMtM6PBd5Eg2gvpF4GW7kVtIN/exec?l=${encodeURIComponent(listaParam)}`
+      `https://script.google.com/macros/s/AKfycbwH5HpTc59LL8P8TLaHKAfUjemrJ8QHVZ0xcanygYY-8aNZ0ySesNvwDa-yQZQHJjxRwQ/exec?l=${encodeURIComponent(listaParam)}`
     );
     const data = await respuesta.json();
 
