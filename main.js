@@ -1,5 +1,3 @@
-// ✅ main.js — versión completa con carga de token, limpieza de URL y envío final
-
 window.addEventListener("DOMContentLoaded", async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const listaParam = urlParams.get("l") || "";
@@ -14,7 +12,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       localStorage.setItem("token", data.token);
       localStorage.setItem("lista", data.lista);
 
-      // Limpia la URL (quita ?l=...)
+      // Limpiar ?l=... de la URL sin recargar
       if (window.history.replaceState) {
         const nuevaUrl = window.location.origin + window.location.pathname;
         window.history.replaceState({}, document.title, nuevaUrl);
@@ -34,6 +32,9 @@ document.getElementById("formulario").addEventListener("submit", async function 
   boton.disabled = true;
   boton.textContent = "Enviando...";
 
+  // ⚠️ Limpiar errores anteriores
+  document.querySelectorAll(".error-mensaje").forEach(el => el.textContent = "");
+
   const token = localStorage.getItem("token");
   const lista = localStorage.getItem("lista");
 
@@ -48,23 +49,30 @@ document.getElementById("formulario").addEventListener("submit", async function 
   const zona = document.getElementById("zona").value.trim(); // honeypot
   const estado = document.getElementById("estado").value.trim(); // honeypot
 
-  // Validaciones espejo
   const errores = [];
 
-  if (nombre.length < 1 || nombre.length > 30) errores.push("Nombre inválido");
-  if (apellido.length < 1 || apellido.length > 30) errores.push("Apellido inválido");
-  if (!/^[0-9]{8}$/.test(dni)) errores.push("DNI inválido");
-  if (!/^[0-9]{2,4}$/.test(codigoArea)) errores.push("Código de área inválido");
-  if (!/^[0-9]{7,9}$/.test(numeroCelular)) errores.push("Número de celular inválido");
-  if (!email.includes("@")) errores.push("Email inválido");
-  if (direccion.length < 3) errores.push("Dirección inválida");
-  if (zona !== "") errores.push("Honeypot zona debe estar vacío");
-  if (estado !== "") errores.push("Honeypot estado debe estar vacío");
-  if (!token) errores.push("Token ausente");
-  if (!lista) errores.push("Lista ausente");
+  if (nombre.length < 1 || nombre.length > 30) errores.push({ campo: "nombre", mensaje: "Nombre inválido" });
+  if (apellido.length < 1 || apellido.length > 30) errores.push({ campo: "apellido", mensaje: "Apellido inválido" });
+  if (!/^[0-9]{8}$/.test(dni)) errores.push({ campo: "dni", mensaje: "DNI debe tener 8 dígitos" });
+  if (!/^[0-9]{2,4}$/.test(codigoArea)) errores.push({ campo: "codigoArea", mensaje: "Código de área inválido" });
+  if (!/^[0-9]{7,9}$/.test(numeroCelular)) errores.push({ campo: "numeroCelular", mensaje: "Número celular inválido" });
+  if (!email.includes("@")) errores.push({ campo: "email", mensaje: "Email inválido" });
+  if (direccion.length < 3) errores.push({ campo: "direccion", mensaje: "Dirección demasiado corta" });
+  if (zona !== "") errores.push({ campo: "zona", mensaje: "Campo inválido" });
+  if (estado !== "") errores.push({ campo: "estado", mensaje: "Campo inválido" });
+  if (!token) errores.push({ campo: "formulario", mensaje: "Token ausente. Refrescar página." });
+  if (!lista) errores.push({ campo: "formulario", mensaje: "Lista no detectada. Refrescar página." });
 
+  // ⚠️ Mostrar errores visualmente
   if (errores.length > 0) {
-    alert("Errores:\n" + errores.join("\n"));
+    errores.forEach(({ campo, mensaje }) => {
+      const campoInput = document.getElementById(campo);
+      const errorElement = campoInput?.nextElementSibling;
+      if (errorElement && errorElement.classList.contains("error-mensaje")) {
+        errorElement.textContent = mensaje;
+      }
+    });
+
     boton.disabled = false;
     boton.textContent = "Registrarse";
     return;
@@ -95,11 +103,11 @@ document.getElementById("formulario").addEventListener("submit", async function 
 
     const resultado = await respuesta.json();
 
-    if (resultado.success) {
+    if (resultado.success || resultado === "Registrado con éxito") {
       alert("¡Registro exitoso!");
       document.getElementById("formulario").reset();
     } else {
-      alert("Error: " + resultado.message);
+      alert("Error: " + (resultado.message || resultado));
     }
 
   } catch (error) {
