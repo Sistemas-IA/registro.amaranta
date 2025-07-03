@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registro Amaranta</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-image: url('img/fondo.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+  <div class="bg-white bg-opacity-90 shadow-xl rounded-2xl p-6 max-w-xl w-full">
+    <div class="text-center mb-4">
+      <img src="img/header.png" alt="Amaranta" class="mx-auto max-h-24">
+    </div>
+
+    <form id="formulario" class="space-y-4">
+
+      <div>
+        <input type="text" id="nombre" name="nombre" placeholder="Nombre" class="w-full p-3 border rounded-xl" />
+        <p class="text-red-500 text-sm mt-1" id="error-nombre"></p>
+      </div>
+
+      <div>
+        <input type="text" id="apellido" name="apellido" placeholder="Apellido" class="w-full p-3 border rounded-xl" />
+        <p class="text-red-500 text-sm mt-1" id="error-apellido"></p>
+      </div>
+
+      <div>
+        <input type="text" id="dni" name="dni" placeholder="DNI" class="w-full p-3 border rounded-xl" />
+        <p class="text-red-500 text-sm mt-1" id="error-dni"></p>
+      </div>
+
+      <div class="flex gap-2">
+        <input type="text" id="codigoArea" name="codigoArea" placeholder="Código de área" class="w-1/3 p-3 border rounded-xl" />
+        <input type="text" id="numeroTel" name="numeroTel" placeholder="Número de teléfono" class="w-2/3 p-3 border rounded-xl" />
+      </div>
+      <p class="text-red-500 text-sm mt-1" id="error-telefono"></p>
+
+      <div>
+        <input type="email" id="email" name="email" placeholder="Correo electrónico" class="w-full p-3 border rounded-xl" />
+        <p class="text-red-500 text-sm mt-1" id="error-email"></p>
+      </div>
+
+      <div>
+        <input type="text" id="direccion" name="direccion" placeholder="Dirección de entrega" class="w-full p-3 border rounded-xl" />
+        <p class="text-red-500 text-sm mt-1" id="error-direccion"></p>
+      </div>
+
+      <div>
+        <textarea id="comentarios" name="comentarios" placeholder="Comentarios (opcional)" class="w-full p-3 border rounded-xl resize-none"></textarea>
+      </div>
+
+      <!-- Honeypots -->
+      <input type="hidden" id="zona" name="zona" value="" />
+      <input type="hidden" id="estado" name="estado" value="" />
+
+      <div class="text-center">
+        <button type="submit" id="btnEnviar" class="bg-pink-600 text-white font-semibold py-3 px-6 rounded-xl shadow hover:bg-pink-700 transition">
+          Registrarse
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Modal -->
+  <dialog id="modalError" class="rounded-xl p-4 max-w-sm w-full shadow-xl">
+    <div class="text-center">
+      <p id="modalMensaje" class="text-base mb-4"></p>
+      <button onclick="document.getElementById('modalError').close()" class="bg-pink-600 text-white px-4 py-2 rounded-xl hover:bg-pink-700 transition">
+        Cerrar
+      </button>
+    </div>
+  </dialog>
+
+  <script src="main.js" defer></script>
+</body>
+</html>
