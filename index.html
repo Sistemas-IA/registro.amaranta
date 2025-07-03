@@ -1,0 +1,43 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Registro Amaranta</title>
+  <link href="style.css" rel="stylesheet"/>
+</head>
+<body>
+  <div id="contenidoPrincipal">
+    <form id="formulario">
+      <input type="text" id="nombre" name="nombre" placeholder="Nombre" required>
+      <input type="text" id="apellido" name="apellido" placeholder="Apellido" required>
+      <input type="text" id="dni" name="dni" placeholder="DNI" required>
+      <input type="text" id="telefono" name="telefono" placeholder="Teléfono" required>
+      <input type="email" id="email" name="email" placeholder="Email" required>
+      <input type="text" id="direccion" name="direccion" placeholder="Dirección" required>
+      <textarea id="comentarios" name="comentarios" placeholder="Comentarios (opcional)"></textarea>
+      <input type="hidden" id="zona" name="zona">
+      <input type="hidden" id="estado" name="estado">
+      <input type="hidden" id="lista" name="lista">
+      <button type="submit" id="btnSubmit">Registrarse</button>
+    </form>
+  </div>
+
+  <div id="modalExito" class="modal oculto">
+    <div class="contenido">
+      <p>¡Registro exitoso!</p>
+      <button onclick="cerrarModalExito()">Cerrar</button>
+    </div>
+  </div>
+
+  <div id="modalError" class="modal oculto">
+    <div class="contenido">
+      <p id="mensajeError"></p>
+      <button onclick="cerrarModalError()">Cerrar</button>
+    </div>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
