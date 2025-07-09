@@ -1,6 +1,17 @@
 {
   "routes": [
-    { "src": "/api/register", "headers": { "Access-Control-Allow-Origin": "*" }, "dest": "/api/register.ts" },
-    { "handle": "filesystem" }
+    {
+      "src": "/api/register",
+      "headers": { "Access-Control-Allow-Origin": "*" },
+      "dest": "/api/register.ts"
+    },
+
+    { "handle": "filesystem" },
+
+    /* Todo lo que no sea /api se reescribe a la carpeta /src */
+    {
+      "src": "/(.*)",
+      "dest": "/src/$1"
+    }
   ]
 }
