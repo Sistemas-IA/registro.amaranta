@@ -2,10 +2,10 @@
 
 const CONFIG = {
   // reCAPTCHA v2 invisible (clave del sitio - frontend)
-  RECAPTCHA_SITE_KEY: "TU_CLAVE_PUBLICA_AQUI",
+  RECAPTCHA_SITE_KEY: "6LdNAXUrAAAAAIz5Vi5nLnkSHF-fjoTXPSKa2x6y",
 
   // reCAPTCHA secret key (solo para backend)
-  RECAPTCHA_SECRET_KEY: "TU_CLAVE_SECRETA_AQUI",
+  RECAPTCHA_SECRET_KEY: "6LdNAXUrAAAAAPIQkyTVFPqs1S0a6Eb2oczOnsG8",
 
   // Límite de registros por IP por día
   LIMITE_REGISTROS_POR_IP: 10,
