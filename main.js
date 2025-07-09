@@ -6,7 +6,7 @@ async function handleSubmit(e) {
   const data = Object.fromEntries(new FormData(form).entries());
 
   // Obtén el token v2 invisible
-  const token = await grecaptcha.execute('%%SITE_KEY%%', { action: 'submit' });
+  const token = await grecaptcha.execute('6LdNAXUrAAAAAIz5Vi5nLnkSHF-fjoTXPSKa2x6y', { action: 'submit' });
 
   // Añade el token al payload
   const payload = { ...data, token };
