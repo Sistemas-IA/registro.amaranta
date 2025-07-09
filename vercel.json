@@ -8,7 +8,6 @@
 
     { "handle": "filesystem" },
 
-    /* Todo lo que no sea /api se reescribe a la carpeta /src */
     {
       "src": "/(.*)",
       "dest": "/src/$1"
