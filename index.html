@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Autorregistro</title>
+  <script src="https://www.google.com/recaptcha/api.js?render=RECAPTCHA_SITE_KEY"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@^3/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <form id="registro" class="bg-white p-6 rounded-xl w-full max-w-md space-y-4 shadow-lg">
+    <h1 class="text-center font-bold text-xl">Registro de Clientes</h1>
+
+    <!-- Campos -->
+    <div>
+      <label class="block text-sm">Nombre *</label>
+      <input id="nombre" class="campo" type="text">
+      <p id="err-nombre" class="msg text-red-600 text-xs"></p>
+    </div>
+
+    <div>
+      <label class="block text-sm">Apellido *</label>
+      <input id="apellido" class="campo" type="text">
+      <p id="err-apellido" class="msg text-red-600 text-xs"></p>
+    </div>
+
+    <div>
+      <label class="block text-sm">DNI *</label>
+      <input id="dni" class="campo" type="text" inputmode="numeric">
+      <p id="err-dni" class="msg text-red-600 text-xs"></p>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2">
+      <div>
+        <label class="block text-sm">Cód. Área *</label>
+        <input id="codArea" class="campo" type="text" inputmode="numeric">
+      </div>
+      <div>
+        <label class="block text-sm">N.º Celular *</label>
+        <input id="numCel" class="campo" type="text" inputmode="numeric">
+      </div>
+    </div>
+    <p id="err-telefono" class="msg text-red-600 text-xs"></p>
+
+    <div>
+      <label class="block text-sm">Email *</label>
+      <input id="email" class="campo" type="email">
+      <p id="err-email" class="msg text-red-600 text-xs"></p>
+    </div>
+
+    <div>
+      <label class="block text-sm">Dirección *</label>
+      <input id="direccion" class="campo" type="text">
+      <p id="err-direccion" class="msg text-red-600 text-xs"></p>
+    </div>
+
+    <div>
+      <label class="block text-sm">Comentarios</label>
+      <textarea id="comentarios" class="campo"></textarea>
+      <p id="err-comentarios" class="msg text-red-600 text-xs"></p>
+    </div>
+
+    <!-- Honeypots -->
+    <input name="Zona" style="display:none">
+    <input name="Estado" style="display:none">
+
+    <button id="btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl">Enviar</button>
+    <div id="spinner" class="hidden text-center text-sm">Enviando…</div>
+  </form>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

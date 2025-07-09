@@ -1,0 +1,6 @@
+{
+  "routes": [
+    { "src": "/api/register", "dest": "/api/register-edge.js" },
+    { "handle": "filesystem" }
+  ]
+}
