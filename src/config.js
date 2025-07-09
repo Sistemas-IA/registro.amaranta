@@ -39,7 +39,7 @@ const CONFIG = {
   MENSAJE_LIMITE_IP: "⚠️ Esta red alcanzó el límite de registros diarios. Por favor, comunicate con soporte si necesitás registrar más personas.",
 
   // URL del endpoint de Google Apps Script
-  GAS_ENDPOINT_URL: "https://script.google.com/macros/s/CLAVE_DEL_SCRIPT/exec"
+  GAS_ENDPOINT_URL: "https://script.google.com/macros/s/AKfycbwD8vts1ZfvqpZLaH8htXI3SWJ6CelUg0cAKixEzZ2GDlDqKccr3IEdNBIHLx2hjz5DyA/exec"
 };
 
 if (typeof module !== 'undefined') {
