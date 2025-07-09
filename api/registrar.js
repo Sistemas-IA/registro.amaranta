@@ -1,5 +1,8 @@
 // api/registrar.js  (reenviando el token al backend GAS)
-import { API_URL, API_KEY } from '../src/constants.js';
+// --- Pon tus valores aquí ---
+const API_URL = "https://script.google.com/macros/s/AKfycbyhOmXxYWg8qz1PtZmtzkRtOmA5PdA8cNXGL11b8D8nNw17o746GT4lVDvYgiexy3CDWA/exec";
+const API_KEY = "6LdNAXUrAAAAAPIQkyTVFPqs1S0a6Eb2oczOnsG8";   // la misma que tienes en GAS
+// ----------------------------
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
