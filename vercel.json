@@ -1,0 +1,6 @@
+{
+  "routes": [
+    { "src": "/api/register", "headers": { "Access-Control-Allow-Origin": "*" }, "dest": "/api/register.ts" },
+    { "handle": "filesystem" }
+  ]
+}
