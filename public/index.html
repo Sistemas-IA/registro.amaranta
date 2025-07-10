@@ -4,16 +4,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Formulario de Registro</title>
-  <script src="https://www.google.com/recaptcha/api.js?render=TU_CLAVE_PUBLICA_AQUI"></script>
+  
+  <!-- Clave real de reCAPTCHA v2 invisible -->
+  <script src="https://www.google.com/recaptcha/api.js?render=6LdNAXUrAAAAAIz5Vi5nLnkSHF-fjoTXPSKa2x6y"></script>
+
+  <!-- Scripts del formulario -->
   <script src="/src/validaciones.js" defer></script>
   <script src="/src/mensajes.js" defer></script>
   <script src="/src/config.js" defer></script>
-  <script src="/src/main.js" defer></script> <!-- Este archivo manejará la lógica del envío -->
+  <script src="/src/main.js" defer></script>
 </head>
 <body>
   <main>
     <h1>Formulario de Registro</h1>
-    <form id="form-registro">
+
+    <!-- Agregado: novalidate para evitar validaciones nativas del navegador -->
+    <form id="form-registro" novalidate>
       <input type="text" name="Nombre" placeholder="Nombre" required />
       <input type="text" name="Apellido" placeholder="Apellido" required />
       <input type="text" name="DNI" placeholder="DNI (8 dígitos)" required />
@@ -33,7 +39,7 @@
       <button type="submit">Registrarse</button>
     </form>
 
-    <!-- Modal -->
+    <!-- Modal de confirmación o error -->
     <div id="modal" style="display: none;">
       <div id="modal-content">
         <p id="modal-mensaje"></p>
