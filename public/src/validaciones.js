@@ -4,7 +4,7 @@
 const LISTAS_PERMITIDAS = Array.from({ length: 100 }, (_, i) => i.toString());
 
 function esTextoValido(valor, min = 2, max = 30) {
-  const regex = new RegExp(`^[a-zA-ZÁÉÍÓÚáéíóúÑñ\s]{${min},${max}}$`);
+  const regex = new RegExp(`^[a-zA-ZÁÉÍÓÚáéíóúÑñ\\s]{${min},${max}}$`);
   return regex.test(valor.trim());
 }
 
@@ -48,7 +48,50 @@ function sanitizar(valor) {
   return valor.replace(/["'=<>]/g, '').trim();
 }
 
-// Exportación
+// ✅ NUEVO: Función principal usada por main.js
+function validarFormulario(datos) {
+  const errores = [];
+
+  if (!esTextoValido(datos.Nombre)) {
+    errores.push("El nombre no es válido.");
+  }
+
+  if (!esTextoValido(datos.Apellido)) {
+    errores.push("El apellido no es válido.");
+  }
+
+  if (!esDNIValido(datos.DNI)) {
+    errores.push("El DNI debe tener exactamente 8 dígitos.");
+  }
+
+  if (!esTelefonoValido(datos.CodArea, datos.Numero)) {
+    errores.push("El teléfono no es válido.");
+  }
+
+  if (!esEmailValido(datos.Email)) {
+    errores.push("El email no tiene formato válido.");
+  }
+
+  if (!esDireccionValida(datos.Direccion)) {
+    errores.push("La dirección no es válida.");
+  }
+
+  if (!esComentarioValido(datos.Comentarios)) {
+    errores.push("Los comentarios no deben superar los 300 caracteres.");
+  }
+
+  if (!esHoneypotVacio(datos.Zona) || !esHoneypotVacio(datos.Estado)) {
+    errores.push("Error de verificación automática.");
+  }
+
+  if (!esListaPermitida(datos.Lista)) {
+    errores.push("El valor de la lista no es válido.");
+  }
+
+  return errores;
+}
+
+// Exportación para entorno Node (testing opcional)
 if (typeof module !== 'undefined') {
   module.exports = {
     esTextoValido,
@@ -61,7 +104,7 @@ if (typeof module !== 'undefined') {
     esHoneypotVacio,
     esListaPermitida,
     sanitizar,
-    LISTAS_PERMITIDAS
+    LISTAS_PERMITIDAS,
+    validarFormulario
   };
 }
-
