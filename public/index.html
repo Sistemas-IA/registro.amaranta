@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Formulario de Registro</title>
+  
+  <!-- Clave real de reCAPTCHA v2 invisible -->
+
+  <!-- Scripts del formulario -->
+  <script src="/src/validaciones.js" defer></script>
+  <script src="/src/mensajes.js" defer></script>
+  <script src="/src/config.js" defer></script>
+  <script src="/src/main.js" defer></script>
+</head>
+<body>
+  <main>
+    <h1>Formulario de Registro</h1>
+
+    <!-- Agregado: novalidate para evitar validaciones nativas del navegador -->
+    <form id="form-registro" novalidate>
+      <input type="text" name="Nombre" placeholder="Nombre" required />
+      <input type="text" name="Apellido" placeholder="Apellido" required />
+      <input type="text" name="DNI" placeholder="DNI (8 dígitos)" required />
+      <input type="text" name="CodArea" placeholder="Código de área" required />
+      <input type="text" name="Numero" placeholder="Número de celular" required />
+      <input type="email" name="Email" placeholder="Email" required />
+      <input type="text" name="Direccion" placeholder="Dirección" required />
+      <textarea name="Comentarios" placeholder="Comentarios (opcional)"></textarea>
+
+      <!-- Honeypots -->
+      <input type="text" name="Zona" style="display:none;" tabindex="-1" autocomplete="off" />
+      <input type="text" name="Estado" style="display:none;" tabindex="-1" autocomplete="off" />
+
+      <!-- Campo oculto: Lista -->
+      <input type="hidden" name="Lista" id="input-lista" />
+
+      <button id="btn-submit" class="g-recaptcha" data-sitekey="6LdNAXUrAAAAAIz5Vi5nLnkSHF-fjoTXPSKa2x6y" data-callback="onCaptchaSuccess" data-size="invisible">Registrarse</button>
+    </form>
+
+    <!-- Modal de confirmación o error -->
+    <div id="modal" style="display: none;">
+      <div id="modal-content">
+        <p id="modal-mensaje"></p>
+        <button id="modal-cerrar">Cerrar</button>
+      </div>
+    </div>
+  </main>
+  <!-- Google reCAPTCHA v2 Invisible -->
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+</body>
+</html>
