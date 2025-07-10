@@ -29,7 +29,7 @@ function esEmailValido(email) {
 }
 
 function esDireccionValida(direccion) {
-  return /^[a-zA-Z0-9\s.,º#\-]{5,100}$/.test(direccion.trim());
+  return /^[a-zA-Z0-9\s.,°º#\-]{5,100}$/.test(direccion.trim());
 }
 
 function esComentarioValido(comentario) {
