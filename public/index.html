@@ -2,79 +2,34 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Formulario de Registro</title>
+  <title>Registro v2-Invisible</title>
 
-  <!-- Carga oficial de reCAPTCHA v2 Invisible (sin ?render=) -->
+  <!-- reCAPTCHA v2 Invisible – SIN ?render= -->
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
-  <!-- Importa tu JS como módulo -->
+  <!-- Cargamos nuestro JS como módulo -->
   <script type="module" src="/src/main.js"></script>
 
   <style>
     body { font-family: system-ui, sans-serif; max-width: 600px; margin: 2rem auto; }
-    label { display: block; margin-top: 0.8rem; }
-    input, button { width: 100%; padding: 0.5rem; }
-    button { cursor: pointer; }
+    label { display:block; margin-top: .8rem }
+    input,button { width:100%; padding:.5rem }
+    button { cursor:pointer }
   </style>
 </head>
-
 <body>
-  <h1>Formulario de Registro</h1>
+  <h1>Formulario de prueba</h1>
 
-  <form id="form-registro">
-    <label>
-      Nombre
-      <input name="Nombre" required />
-    </label>
+  <form id="form">
+    <label>Nombre <input name="Nombre" required /></label>
+    <label>Email  <input name="Email" type="email" required /></label>
 
-    <label>
-      Apellido
-      <input name="Apellido" required />
-    </label>
-
-    <label>
-      DNI
-      <input name="DNI" required />
-    </label>
-
-    <label>
-      Email
-      <input name="Email" type="email" required />
-    </label>
-
-    <label>
-      Código área
-      <input name="CodArea" required />
-    </label>
-
-    <label>
-      Número
-      <input name="Numero" required />
-    </label>
-
-    <label>
-      Dirección
-      <input name="Direccion" required />
-    </label>
-
-    <label>
-      Comentarios
-      <input name="Comentarios" />
-    </label>
-
-    <label>
-      Lista
-      <input name="Lista" required />
-    </label>
-
-    <!-- Honeypots ocultos (para bots) -->
+    <!-- Honeypots -->
     <input name="Zona"   style="display:none" />
     <input name="Estado" style="display:none" />
 
-    <!-- Botón Invisible reCAPTCHA -->
+    <!-- Botón con captcha invisible -->
     <button
-      id="btnEnviar"
       class="g-recaptcha"
       data-sitekey="6LdNAXUrAAAAAIz5Vi5nLnkSHF-fjoTXPSKa2x6y"
       data-callback="onCaptchaSuccess"
