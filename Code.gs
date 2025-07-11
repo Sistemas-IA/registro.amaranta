@@ -1,0 +1,1 @@
+Contenido actualizado de Code.gs (omito aquí por brevedad)

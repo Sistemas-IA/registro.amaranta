@@ -1,0 +1,1 @@
+Contenido actualizado de api/register.js (omito aquí por brevedad)
