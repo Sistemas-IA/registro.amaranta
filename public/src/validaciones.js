@@ -1,110 +1,43 @@
-// validaciones.js
+/* ------------------------------------------------------------------
+   Validaciones del formulario – versión mínima y autosuficiente
+   Edita las expresiones o reglas según tus requisitos reales.
+------------------------------------------------------------------ */
 
-// Constantes de validación
-const LISTAS_PERMITIDAS = Array.from({ length: 100 }, (_, i) => i.toString());
-
-function esTextoValido(valor, min = 2, max = 30) {
-  const regex = new RegExp(`^[a-zA-ZÁÉÍÓÚáéíóúÑñ\\s]{${min},${max}}$`);
-  return regex.test(valor.trim());
+/* ───── Utilidades ───── */
+export function sanitizar(texto = "") {
+  return String(texto).replace(/[<>"'=]/g, "").trim();
+}
+export function normalizarTelefono(codArea, numero) {
+  return `${codArea}${numero}`.replace(/\D/g, "");
+}
+function longitud(txt, min, max) {
+  const l = txt.trim().length;
+  return l >= min && l <= max;
 }
 
-function esDNIValido(dni) {
-  const limpio = dni.trim().replace(/^0+/, ''); // eliminar ceros a izquierda
-  return /^\d{8}$/.test(limpio);
+/* ───── Validaciones de campos ───── */
+export function esTextoValido(txt) {
+  return /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(txt) && longitud(txt, 2, 30);
 }
-
-function esTelefonoValido(codArea, numero) {
-  const cod = codArea.trim();
-  const num = numero.trim();
-  const completo = cod + num;
-  return /^\d{9,13}$/.test(completo);
+export function esDNIValido(dni) {
+  return /^\d{8}$/.test(dni);
 }
-
-function normalizarTelefono(codArea, numero) {
-  return '549' + codArea.trim() + numero.trim();
+export function esEmailValido(email) {
+  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
 }
-
-function esEmailValido(email) {
-  return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.trim().toLowerCase());
+export function esTelefonoValido(codArea, numero) {
+  const tel = normalizarTelefono(codArea, numero);
+  return /^\d{9,13}$/.test(tel);
 }
-
-function esDireccionValida(direccion) {
-  return /^[a-zA-Z0-9\s.,°º#\-]{5,100}$/.test(direccion.trim());
+export function esDireccionValida(dir) {
+  return longitud(dir, 3, 100);
 }
-
-function esComentarioValido(comentario) {
-  return comentario.trim().length <= 300;
+export function esComentarioValido(com) {
+  return longitud(com, 0, 300);
 }
-
-function esHoneypotVacio(valor) {
-  return valor.trim() === '';
+export function esListaPermitida(lista) {
+  return /^\d{1,2}$/.test(lista);
 }
-
-function esListaPermitida(valor) {
-  return LISTAS_PERMITIDAS.includes(valor.trim());
-}
-
-function sanitizar(valor) {
-  return valor.replace(/["'=<>]/g, '').trim();
-}
-
-// ✅ NUEVO: Función principal usada por main.js
-function validarFormulario(datos) {
-  const errores = [];
-
-  if (!esTextoValido(datos.Nombre)) {
-    errores.push("El nombre no es válido.");
-  }
-
-  if (!esTextoValido(datos.Apellido)) {
-    errores.push("El apellido no es válido.");
-  }
-
-  if (!esDNIValido(datos.DNI)) {
-    errores.push("El DNI debe tener exactamente 8 dígitos.");
-  }
-
-  if (!esTelefonoValido(datos.CodArea, datos.Numero)) {
-    errores.push("El teléfono no es válido.");
-  }
-
-  if (!esEmailValido(datos.Email)) {
-    errores.push("El email no tiene formato válido.");
-  }
-
-  if (!esDireccionValida(datos.Direccion)) {
-    errores.push("La dirección no es válida.");
-  }
-
-  if (!esComentarioValido(datos.Comentarios)) {
-    errores.push("Los comentarios no deben superar los 300 caracteres.");
-  }
-
-  if (!esHoneypotVacio(datos.Zona) || !esHoneypotVacio(datos.Estado)) {
-    errores.push("Error de verificación automática.");
-  }
-
-  if (!esListaPermitida(datos.Lista)) {
-    errores.push("El valor de la lista no es válido.");
-  }
-
-  return errores;
-}
-
-// Exportación para entorno Node (testing opcional)
-if (typeof module !== 'undefined') {
-  module.exports = {
-    esTextoValido,
-    esDNIValido,
-    esTelefonoValido,
-    normalizarTelefono,
-    esEmailValido,
-    esDireccionValida,
-    esComentarioValido,
-    esHoneypotVacio,
-    esListaPermitida,
-    sanitizar,
-    LISTAS_PERMITIDAS,
-    validarFormulario
-  };
+export function esHoneypotVacio(valor) {
+  return valor.trim() === "";
 }
