@@ -5,39 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Formulario de Registro</title>
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+  <!-- --- Estilos mínimos: campos apilados, sin ancho completo --- -->
+  <style>
+    body  { font-family: system-ui, sans-serif; margin: 0; padding: 1rem; }
+    form  { display:block; max-width:420px; margin:0 auto; }
+
+    input, textarea, button {
+      display:block;
+      margin-bottom:.35rem;
+      padding:.5rem;
+      font-size:1rem;
+    }
+
+    small.error-msg {
+      color:crimson;
+      font-size:.8rem;
+      margin:-.25rem 0 .25rem;
+      display:none;
+    }
+
+    button[disabled] { opacity:.6; cursor:not-allowed; }
+  </style>
 </head>
 <body>
   <form id="registro-form">
-    <input name="nombre" placeholder="Nombre" required type="text" />
-    <small class="error-msg" style="color:red;display:none;"></small>
+    <input  name="nombre"          placeholder="Nombre"             required />
+    <small class="error-msg"></small>
 
-    <input name="apellido" placeholder="Apellido" required type="text" />
-    <small class="error-msg" style="color:red;display:none;"></small>
+    <input  name="apellido"        placeholder="Apellido"           required />
+    <small class="error-msg"></small>
 
-    <input name="dni" placeholder="DNI" required type="text" />
-    <small class="error-msg" style="color:red;display:none;"></small>
+    <input  name="dni"             placeholder="DNI (8 dígitos)"    required />
+    <small class="error-msg"></small>
 
-    <input id="codArea"  name="codArea"  placeholder="Código de área"   required type="text" />
-    <small class="error-msg" style="color:red;display:none;"></small>
+    <input  id="codArea"           name="codArea"        placeholder="Código de área"   required />
+    <small class="error-msg"></small>
 
-    <input id="numeroTelefono" name="numeroTelefono" placeholder="Número de teléfono" required type="text" />
-    <small class="error-msg" style="color:red;display:none;"></small>
+    <input  id="numeroTelefono"    name="numeroTelefono" placeholder="Número de teléfono" required />
+    <small class="error-msg"></small>
 
-    <input name="email" placeholder="Email" required type="email" />
-    <small class="error-msg" style="color:red;display:none;"></small>
+    <input  name="email"           placeholder="Email"              required />
+    <small class="error-msg"></small>
 
-    <input name="direccion" placeholder="Dirección" required type="text" />
-    <small class="error-msg" style="color:red;display:none;"></small>
+    <input  name="direccion"       placeholder="Dirección"          required />
+    <small class="error-msg"></small>
 
-    <textarea name="comentarios" placeholder="Comentarios"></textarea>
-    <small class="error-msg" style="color:red;display:none;"></small>
+    <textarea name="comentarios"   placeholder="Comentarios (opcional)"></textarea>
+    <small class="error-msg"></small>
 
-    <!-- Honeypot -->
-    <input name="zona"   style="display:none" tabindex="-1" type="text" />
-    <small class="error-msg" style="color:red;display:none;"></small>
-
-    <input name="estado" style="display:none" tabindex="-1" type="text" />
-    <small class="error-msg" style="color:red;display:none;"></small>
+    <!-- Honeypots -->
+    <input name="zona"   tabindex="-1" style="display:none" />
+    <input name="estado" tabindex="-1" style="display:none" />
 
     <button
       class="g-recaptcha"
@@ -48,52 +67,52 @@
       Enviar
     </button>
 
-    <!-- Campos ocultos que completa el script -->
+    <!-- Campos ocultos completados por JS -->
     <input id="telefono" name="telefono" type="hidden" />
     <input id="lista"    name="lista"    type="hidden" />
   </form>
 
   <script>
-  /* ───────────── Regex de validación ───────────── */
+  /* ───────── Patrones de validación ───────── */
   const patterns = {
-    nombre:           /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\-\\s]{2,30}$/,
-    apellido:         /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\-\\s]{2,30}$/,
-    dni:              /^\\d{8}$/,
-    codArea:          /^\\d{2,4}$/,
-    numeroTelefono:   /^\\d{7,9}$/,
-    email:            /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/,
-    direccion:        /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ\\.\\,\\-\\s]{5,100}$/,
-    comentarios:      /^.{0,300}$/
+    nombre:         /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\-\s]{2,30}$/,
+    apellido:       /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\-\s]{2,30}$/,
+    dni:            /^\d{8}$/,
+    codArea:        /^\d{2,4}$/,
+    numeroTelefono: /^\d{7,9}$/,
+    email:          /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
+    direccion:      /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ.,\-\s]{5,100}$/,
+    comentarios:    /^.{0,300}$/
   };
 
   const form      = document.getElementById('registro-form');
   const submitBtn = form.querySelector('button.g-recaptcha');
 
-  /* ─ Llenar campo oculto "lista" con ?l= de la URL ─ */
+  /* Rellenar lista desde ?l= de la URL */
   document.getElementById('lista').value =
     new URLSearchParams(location.search).get('l') ?? '';
 
-  /* ─ Mostrar / ocultar mensaje de error ─ */
+  /* Mostrar / ocultar error */
   function showError(input, msg) {
     const span = input.nextElementSibling;
     span.textContent   = msg;
     span.style.display = msg ? 'block' : 'none';
   }
 
-  /* ─ Validar un input ─ */
+  /* Validar un input */
   function validateInput(input) {
-    const key = input.getAttribute('name') || input.id;
-    if (!patterns[key]) return true;                     // sin patrón = válido
+    const key      = input.getAttribute('name') || input.id;
+    if (!patterns[key]) return true;
 
-    const val     = input.value.trim();
-    const touched = input.dataset.touched === 'true';   // ¿usuario interactuó?
-    const valid   = val !== '' && patterns[key].test(val);
+    const value    = input.value.trim();
+    const touched  = input.dataset.touched === 'true';
+    const valid    = value !== '' && patterns[key].test(value);
 
     showError(input, touched && !valid ? 'Valor inválido' : '');
     return valid;
   }
 
-  /* ─ Marcar “touched” al salir del campo y validar en vivo ─ */
+  /* Blur = campo “touched”, input = validación en vivo */
   form.querySelectorAll('input, textarea').forEach(el => {
     if (el.type === 'hidden') return;
 
@@ -109,7 +128,7 @@
     });
   });
 
-  /* ─ Habilitar / deshabilitar el botón Enviar ─ */
+  /* Habilitar / deshabilitar botón */
   function toggleSubmit() {
     const allValid = [...form.querySelectorAll('input, textarea')]
       .filter(el => el.type !== 'hidden')
@@ -117,29 +136,29 @@
     submitBtn.disabled = !allValid;
   }
 
-  /* ─ Interceptar submit: construir teléfono y ejecutar reCAPTCHA ─ */
+  /* Submit: concatena teléfono y dispara reCAPTCHA */
   form.addEventListener('submit', e => {
     e.preventDefault();
-    if (submitBtn.disabled) return;          // seguridad extra
+    if (submitBtn.disabled) return;
 
     const cod = document.getElementById('codArea').value.trim();
     const num = document.getElementById('numeroTelefono').value.trim();
     document.getElementById('telefono').value = '549' + cod + num;
 
-    grecaptcha.execute();                    // dispara onSubmit
+    grecaptcha.execute();
   });
 
-  /* ─ Callback de reCAPTCHA: enviar el formulario ─ */
+  /* Callback de reCAPTCHA: enviar el formulario */
   function onSubmit(token) {
-    const formData = new FormData(form);
-    formData.append('g-recaptcha-response', token);
+    const data = new FormData(form);
+    data.append('g-recaptcha-response', token);
 
-    fetch('/api/register', { method: 'POST', body: formData })
+    fetch('/api/register', { method:'POST', body:data })
       .then(r => r.json())
       .then(d => {
         alert(d.message || 'Formulario enviado correctamente');
         form.reset();
-        submitBtn.disabled = true;           // vuelve a deshabilitar
+        submitBtn.disabled = true;
       })
       .catch(() => alert('Error al enviar, intentá de nuevo más tarde'));
   }
