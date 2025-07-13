@@ -1,1 +1,0 @@
-/* stays same as earlier with new RegExp(patterns[k]) already present */
