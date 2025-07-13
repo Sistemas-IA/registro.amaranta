@@ -1,9 +1,7 @@
 import Busboy from 'busboy';
 
 export const config = {
-  api: {
-    bodyParser: false, // Necesario para usar Busboy
-  },
+  api: { bodyParser: false },
 };
 
 export default async function handler(req, res) {
@@ -11,88 +9,73 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: "Método no permitido" });
   }
 
+  /* ─ Parsear multipart ─ */
   const fields = {};
-
-  /* ─ Parsear los campos del form usando Busboy ─ */
   await new Promise((resolve, reject) => {
     const busboy = Busboy({ headers: req.headers });
-
-    busboy.on('field', (fieldname, val) => {
-      fields[fieldname] = val;
-    });
-
-    busboy.on('finish', resolve);
-    busboy.on('error', reject);
-
+    busboy.on('field', (name, val) => { fields[name] = val; });
+    busboy.on('finish', resolve).on('error', reject);
     req.pipe(busboy);
   });
 
-  /* ─ Destructuring: añadimos “lista” ─ */
+  /* ─ Extraer campos ─ */
   const {
-    nombre, apellido, dni, telefono,
+    nombre, apellido, dni,
+    codArea, numeroTelefono,          // ← nuevos
     email, direccion, comentarios,
-    lista = "",                  // ← NUEVO
-    zona = "", estado = "",
+    lista = "", zona = "", estado = "",
     ["g-recaptcha-response"]: recaptchaToken
   } = fields;
 
   /* ─ Honeypot ─ */
-  const honeypotActiva = zona.trim() !== "" || estado.trim() !== "";
-  if (honeypotActiva) {
-    console.warn("Intento con honeypot activo");
-    return res.status(200).json({ message: "Error al enviar, intentá de nuevo más tarde" });
+  if (zona.trim() || estado.trim()) {
+    return res.status(200).json({ message:"Error al enviar, intentá de nuevo más tarde" });
   }
 
-  /* ─ Verificar reCAPTCHA con Google ─ */
-  const verifyResponse = await fetch("https://www.google.com/recaptcha/api/siteverify", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  /* ─ Verificar reCAPTCHA ─ */
+  const verify = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+    method:"POST",
+    headers:{ "Content-Type":"application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       secret: process.env.RECAPTCHA_SECRET_KEY,
       response: recaptchaToken,
     }),
-  });
+  }).then(r => r.json());
 
-  const recaptchaData = await verifyResponse.json();
-
-  if (!recaptchaData.success) {
-    console.warn("Fallo reCAPTCHA", recaptchaData);
-    return res.status(200).json({ message: "Error al enviar, intentá de nuevo más tarde" });
+  if (!verify.success) {
+    return res.status(200).json({ message:"Error al enviar, intentá de nuevo más tarde" });
   }
 
-  /* ─ Obtener IP real ─ */
-  const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket?.remoteAddress || "";
+  /* ─ Construir teléfono ─ */
+  const telefono = '549' + codArea + numeroTelefono;
 
-  /* ─ Preparar datos para GAS ─ */
-  const GAS_URL = process.env.GAS_ENDPOINT_URL;
+  /* ─ Preparar payload para GAS ─ */
+  const ip = req.headers["x-forwarded-for"]?.split(',')[0] || req.socket?.remoteAddress || "";
   const payload = {
     nombre,
     apellido,
     dni,
-    telefono,
+    telefono,                 // ← ya concatenado
     email,
     direccion,
     comentarios,
-    zona: "Pendiente",
-    estado: "Pendiente",
-    lista,                         // ← NUEVO
+    zona:"Pendiente",
+    estado:"Pendiente",
+    lista,
     timestamp: new Date().toISOString(),
     ip,
   };
 
   try {
-    const response = await fetch(GAS_URL, {
-      method: "POST",
+    const resp = await fetch(process.env.GAS_ENDPOINT_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
       body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" },
     });
-
-    if (!response.ok) throw new Error("Error al registrar en GAS");
-
-    return res.status(200).json({ message: "Registro exitoso" });
-
+    if (!resp.ok) throw new Error("Error al registrar en GAS");
+    return res.status(200).json({ message:"Registro exitoso" });
   } catch (err) {
-    console.error("Error al enviar a GAS:", err);
-    return res.status(500).json({ message: "Error al enviar, intentá de nuevo más tarde" });
+    console.error("Error:", err);
+    return res.status(500).json({ message:"Error al enviar, intentá de nuevo más tarde" });
   }
 }
