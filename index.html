@@ -65,7 +65,7 @@
   </form>
 
   <script>
-  /* Patrones de validación (un solo \ en cada escape) */
+  /* Patrones de validación */
   const patterns = {
     nombre:         /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,30}$/,
     apellido:       /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,30}$/,
@@ -100,8 +100,7 @@
     const touched  = input.dataset.touched === 'true';
     const required = key !== 'comentarios';               // comentarios opcional
     const passes   = val === '' ? false : patterns[key].test(val);
-    const valid    = required ? (val !== '' && passes)
-                              : (val === '' || passes);
+    const valid    = required ? (val !== '' && passes) : (val === '' || passes);
 
     showError(input, touched && val !== '' && !passes ? 'Valor inválido' : '');
     return valid;
@@ -160,13 +159,14 @@
     fetch('/api/register', { method:'POST', body:data })
       .then(r => r.json())
       .then(d => {
-        if (d.error) {                         // aviso de duplicados u otros
+        if (d.error) {                          // Dato duplicado u otro error
           alert(MSG[d.error] || 'Dato duplicado');
-          return;                              // no se resetea el formulario
+          grecaptcha.reset();                   // ← permite volver a enviar
+          return;
         }
 
-        alert(d.message || MSG.ok);            // éxito real
-        form.reset();                          // limpia sólo en éxito real
+        alert(d.message || MSG.ok);             // Éxito real
+        form.reset();
         submitBtn.disabled = true;
       })
       .catch(() => alert('Error al enviar, intentá de nuevo más tarde'));
