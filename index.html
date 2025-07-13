@@ -52,7 +52,8 @@
       data-sitekey="6LdNAXUrAAAAAIz5Vi5nLnkSHF-fjoTXPSKa2x6y"
       data-callback="onSubmit"
       data-size="invisible"
-      data-badge="bottomright">
+      data-badge="bottomright"
+      disabled>          <!-- ← ahora arranca deshabilitado -->
       Enviar
     </button>
   </form>
@@ -66,7 +67,7 @@
     codArea:        /^\d{2,4}$/,
     numeroTelefono: /^\d{7,9}$/,
     email:          /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
-    direccion:      /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ.,#\/º°()\-\s]{5,100}$/,
+    direccion:      /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ.,#\/º°()\-\s]{5,100}$/,  // ← regex con # / º ° ( )
     comentarios:    /^.{0,300}$/      // opcional
   };
 
@@ -124,8 +125,8 @@
     submitBtn.disabled = !allValid;
   }
 
-  /* Botón inicia deshabilitado */
-  submitBtn.disabled = true;
+  /* Botón ya está disabled en el HTML; confirmamos estado inicial */
+  toggleSubmit();
 
   /* Submit */
   form.addEventListener('submit', e => {
