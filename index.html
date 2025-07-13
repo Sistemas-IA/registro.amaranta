@@ -16,37 +16,36 @@
 </head>
 <body>
   <form id="registro-form">
-    <input  name="nombre"          placeholder="Nombre"             required />
+    <input name="nombre"          placeholder="Nombre"             required />
     <small class="error-msg"></small>
 
-    <input  name="apellido"        placeholder="Apellido"           required />
+    <input name="apellido"        placeholder="Apellido"           required />
     <small class="error-msg"></small>
 
-    <input  name="dni"             placeholder="DNI (8 dígitos)"    required />
+    <input name="dni"             placeholder="DNI (8 dígitos)"    required />
     <small class="error-msg"></small>
 
-    <input  id="codArea"           name="codArea"        placeholder="Código de área" required />
+    <input id="codArea"           name="codArea"        placeholder="Código de área"   required />
     <small class="error-msg"></small>
 
-    <input  id="numeroTelefono"    name="numeroTelefono" placeholder="Número de teléfono" required />
+    <input id="numeroTelefono"    name="numeroTelefono" placeholder="Número de teléfono" required />
     <small class="error-msg"></small>
 
-    <input  name="email"           placeholder="Email"              required />
+    <input name="email"           placeholder="Email"              required />
     <small class="error-msg"></small>
 
-    <input  name="direccion"       placeholder="Dirección"          required />
+    <input name="direccion"       placeholder="Dirección"          required />
     <small class="error-msg"></small>
 
-    <textarea name="comentarios"   placeholder="Comentarios (opcional)"></textarea>
+    <textarea name="comentarios"  placeholder="Comentarios (opcional)"></textarea>
     <small class="error-msg"></small>
 
     <!-- Honeypots -->
     <input name="zona"   tabindex="-1" style="display:none" />
     <input name="estado" tabindex="-1" style="display:none" />
 
-    <!-- Campos ocultos antes del botón para que siempre viajen -->
-    <input id="telefono" name="telefono" type="hidden" />
-    <input id="lista"    name="lista"    type="hidden" />
+    <!-- Campo oculto lista -->
+    <input id="lista" name="lista" type="hidden" />
 
     <button
       class="g-recaptcha"
@@ -59,7 +58,7 @@
   </form>
 
   <script>
-  /* ───── Regex ───── */
+  /* Patrones de validación */
   const patterns = {
     nombre:         /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\-\s]{2,30}$/,
     apellido:       /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\-\s]{2,30}$/,
@@ -68,7 +67,7 @@
     numeroTelefono: /^\d{7,9}$/,
     email:          /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
     direccion:      /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ.,\-\s]{5,100}$/,
-    comentarios:    /^.{0,300}$/
+    comentarios:    /^.{0,300}$/      // opcional
   };
 
   const form      = document.getElementById('registro-form');
@@ -78,31 +77,30 @@
   document.getElementById('lista').value =
     new URLSearchParams(location.search).get('l') ?? '';
 
-  /* Mostrar / ocultar mensaje de error */
+  /* Mostrar / ocultar error */
   function showError(input, msg) {
     const span = input.nextElementSibling;
     span.textContent = msg;
     span.style.display = msg ? 'block' : 'none';
   }
 
-  /* Validación de un campo (comentarios opcional) */
+  /* Validar un campo (comentarios opcional) */
   function validateInput(input) {
     const key = input.getAttribute('name') || input.id;
     if (!patterns[key]) return true;
 
-    const value   = input.value.trim();
-    const touched = input.dataset.touched === 'true';
-    const needsValue = key !== 'comentarios';
+    const val      = input.value.trim();
+    const touched  = input.dataset.touched === 'true';
+    const required = key !== 'comentarios';               // comentarios opcional
+    const passes   = val === '' ? false : patterns[key].test(val);
+    const valid    = required ? (val !== '' && passes)
+                              : (val === '' || passes);
 
-    const passes = value === '' ? false : patterns[key].test(value);
-    const valid  = needsValue ? (value !== '' && passes)         // obligatorios
-                              : (value === '' || passes);        // comentarios opcional
-
-    showError(input, touched && value !== '' && !passes ? 'Valor inválido' : '');
+    showError(input, touched && val !== '' && !passes ? 'Valor inválido' : '');
     return valid;
   }
 
-  /* Eventos de blur / input */
+  /* Eventos */
   form.querySelectorAll('input, textarea').forEach(el => {
     if (el.type === 'hidden') return;
 
@@ -118,6 +116,7 @@
     });
   });
 
+  /* Habilitar / deshabilitar botón */
   function toggleSubmit() {
     const allValid = [...form.querySelectorAll('input, textarea')]
       .filter(el => el.type !== 'hidden')
@@ -125,15 +124,13 @@
     submitBtn.disabled = !allValid;
   }
 
+  /* Botón inicia deshabilitado */
+  submitBtn.disabled = true;
+
   /* Submit */
   form.addEventListener('submit', e => {
     e.preventDefault();
     if (submitBtn.disabled) return;
-
-    const cod = document.getElementById('codArea').value.trim();
-    const num = document.getElementById('numeroTelefono').value.trim();
-    document.getElementById('telefono').value = '549' + cod + num;   // ← ahora siempre viaja
-
     grecaptcha.execute();
   });
 
