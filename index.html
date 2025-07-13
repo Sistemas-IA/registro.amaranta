@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Formulario de Registro</title>
+
+  <!-- reCAPTCHA v2 invisible -->
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
   <style>
@@ -13,7 +15,7 @@
       display:block; margin-bottom:.35rem; padding:.5rem; font-size:1rem;
     }
     small.error-msg { color:crimson; font-size:.8rem; margin:-.25rem 0 .25rem; display:none; }
-    button[disabled] {          /* estado gris */
+    button[disabled] {
       opacity:.6; cursor:not-allowed; pointer-events:none;
     }
   </style>
@@ -57,7 +59,7 @@
       data-callback="onSubmit"
       data-size="invisible"
       data-badge="bottomright"
-      disabled>      <!-- ← arranca deshabilitado -->
+      disabled>
       Enviar
     </button>
   </form>
@@ -65,13 +67,13 @@
   <script>
   /* Patrones de validación */
   const patterns = {
-    nombre:         /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\-\s]{2,30}$/,
-    apellido:       /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\-\s]{2,30}$/,
-    dni:            /^\d{8}$/,
-    codArea:        /^\d{2,4}$/,
-    numeroTelefono: /^\d{7,9}$/,
-    email:          /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
-    direccion:      /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ.,#\/º°()\-\s]{5,100}$/,
+    nombre:         /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\-\\s]{2,30}$/,
+    apellido:       /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\-\\s]{2,30}$/,
+    dni:            /^\\d{8}$/,
+    codArea:        /^\\d{2,4}$/,
+    numeroTelefono: /^\\d{7,9}$/,
+    email:          /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/,
+    direccion:      /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ.,#\\/º°()\\-\\s]{5,100}$/,
     comentarios:    /^.{0,300}$/           // opcional
   };
 
@@ -131,8 +133,8 @@
 
   /* —— Asegurar estado del botón después de que reCAPTCHA re-renderiza —— */
   window.addEventListener('load', () => {
-    submitBtn.disabled = true;  // fuerza deshabilitado
-    toggleSubmit();             // y revisa campos
+    submitBtn.disabled = true;
+    toggleSubmit();
   });
 
   /* Submit */
@@ -142,6 +144,14 @@
     grecaptcha.execute();
   });
 
+  /* Mensajes centralizados */
+  const MSG = {
+    duplicado_dni:   'Ese DNI ya existe.',
+    duplicado_tel:   'Teléfono ya registrado.',
+    duplicado_email: 'E-mail ya registrado.',
+    ok:              'Formulario enviado correctamente'
+  };
+
   /* Callback reCAPTCHA */
   function onSubmit(token) {
     const data = new FormData(form);
@@ -150,8 +160,13 @@
     fetch('/api/register', { method:'POST', body:data })
       .then(r => r.json())
       .then(d => {
-        alert(d.message || 'Formulario enviado correctamente');
-        form.reset();
+        if (d.error) {                         // ← chequea duplicados u otros
+          alert(MSG[d.error] || 'Dato duplicado');
+          return;                              // no se resetea el formulario
+        }
+
+        alert(d.message || MSG.ok);            // éxito real
+        form.reset();                          // limpia sólo en éxito real
         submitBtn.disabled = true;
       })
       .catch(() => alert('Error al enviar, intentá de nuevo más tarde'));
