@@ -16,7 +16,7 @@ const PATTERNS = {
   telefono: /^549\d{9,13}$/,                 // ya normalizado
   email: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
   direccion: /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ.,#\/º°()\-\s]{5,100}$/,
-  comentarios: /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ., ()\/#°\n\r-]{0,300}$/,
+  comentarios: /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ., ()\/#º°\n\r-]{0,300}$/,
 };
 /* ——— Sanitización anti‑XSS ——— */
 function htmlEscape(str) {
