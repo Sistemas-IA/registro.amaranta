@@ -6,25 +6,20 @@
   <title>Formulario de Registro</title>
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
-  <!-- --- Estilos mínimos: campos apilados, sin ancho completo --- -->
+  <!--  ─── Estilo mínimo: campos apilados, ancho auto ─── -->
   <style>
     body  { font-family: system-ui, sans-serif; margin: 0; padding: 1rem; }
     form  { display:block; max-width:420px; margin:0 auto; }
-
     input, textarea, button {
       display:block;
       margin-bottom:.35rem;
       padding:.5rem;
       font-size:1rem;
     }
-
     small.error-msg {
-      color:crimson;
-      font-size:.8rem;
-      margin:-.25rem 0 .25rem;
-      display:none;
+      color:crimson; font-size:.8rem;
+      margin:-.25rem 0 .25rem; display:none;
     }
-
     button[disabled] { opacity:.6; cursor:not-allowed; }
   </style>
 </head>
@@ -99,16 +94,21 @@
     span.style.display = msg ? 'block' : 'none';
   }
 
-  /* Validar un input */
+  /* Validar un input  (Comentarios opcional y sin error en blanco) */
   function validateInput(input) {
-    const key      = input.getAttribute('name') || input.id;
+    const key = input.getAttribute('name') || input.id;
     if (!patterns[key]) return true;
 
-    const value    = input.value.trim();
-    const touched  = input.dataset.touched === 'true';
-    const valid    = value !== '' && patterns[key].test(value);
+    const value   = input.value.trim();
+    const touched = input.dataset.touched === 'true';
+    const needsValue = key !== 'comentarios';                              // opcional
 
-    showError(input, touched && !valid ? 'Valor inválido' : '');
+    const passesRegex = value === '' ? false : patterns[key].test(value);
+    const valid = needsValue ? (value !== '' && passesRegex)               // obligatorios
+                             : (value === '' || passesRegex);              // comentarios
+
+    // Sólo muestra error si el usuario ya interactuó y el valor no pasa la regex
+    showError(input, touched && value !== '' && !passesRegex ? 'Valor inválido' : '');
     return valid;
   }
 
@@ -132,7 +132,7 @@
   function toggleSubmit() {
     const allValid = [...form.querySelectorAll('input, textarea')]
       .filter(el => el.type !== 'hidden')
-      .every(el => validateInput(el));
+      .every(validateInput);
     submitBtn.disabled = !allValid;
   }
 
