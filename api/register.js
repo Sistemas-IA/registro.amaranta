@@ -14,8 +14,18 @@ const PATTERNS = {
   numeroTelefono: /^\d{7,9}$/,
   email: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
   direccion: /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ.,#\/º°()\-\s]{5,100}$/,
-  comentarios: /^.{0,300}$/, // opcional
+  comentarios: /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ., ()\n\r-]{0,300}$/, // opcional
 };
+/* ───────────── Sanitización anti‑XSS ───────────── */
+function sanitizeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 
 const ERR = {
   dni_invalido: "DNI inválido",
@@ -84,8 +94,8 @@ export default async function handler(req, res) {
     dni: fields.dni,
     telefono,
     email: fields.email,
-    direccion: fields.direccion,
-    comentarios: fields.comentarios || "",
+    direccion: sanitizeHtml(fields.direccion),
+    comentarios: sanitizeHtml(fields.comentarios || ""),
     zona: "Pendiente",
     estado: "Pendiente",
     lista: fields.lista || "",
