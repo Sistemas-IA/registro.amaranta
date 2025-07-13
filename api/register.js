@@ -1,14 +1,25 @@
 /**
  * api/register.js – versión 2025-07-13
- * – Mantiene reCAPTCHA, validaciones, llamada a GAS.
- * – Añade rate-limit (10 req/min/IP) y alerta opcional a Slack.
+ * • Mantiene Busboy, regex y reCAPTCHA tal cual
+ * • Añade rate-limit (10 req/min/IP) + alerta opcional a Slack
  */
 
-const hits = new Map();                          // { ip: [timestamps] }
-const GAS_URL          = process.env.GAS_ENDPOINT_URL;
-const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY;
+import Busboy from 'busboy';
 
-/* Regex espejo (sin +549) */
+/* — Config para que Vercel no intente parsear el body — */
+export const config = { api: { bodyParser: false } };
+
+/* — Variables de entorno — */
+const GAS_URL          = process.env.GAS_ENDPOINT_URL;       // URL de tu Apps Script
+const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY;   // clave secreta v2
+const SLACK_HOOK       = process.env.SLACK_HOOK || '';       // opcional
+
+/* — Rate-limit en memoria — */
+const hits   = new Map();          // { ip: [timestamps] }
+const LIMIT  = 10;                 // máx 10 peticiones
+const WINDOW = 60_000;             // en 60 s
+
+/* — Regex espejo (los mismos del front) — */
 const RX = {
   nombre:  /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,30}$/,
   apellido:/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,30}$/,
@@ -21,94 +32,85 @@ const RX = {
 };
 
 export default async function handler(req, res) {
-  /* — Solo POST — */
   if (req.method !== 'POST') return res.status(405).end();
 
-  /* 1 ─── Rate-limit 10 req/min por IP —————————— */
+  /* 1 ▪ Rate-limit (10 req/min/IP) */
   const ip  = (req.headers['x-forwarded-for'] || '').split(',')[0] || 'unknown';
   const now = Date.now();
-  const arr = (hits.get(ip) || []).filter(t => now - t < 60000);
-  if (arr.length >= 10) {
-    notify(ip, 'rate-limit');
-    return res.status(429).json({ error:'rate' });
+  const arr = (hits.get(ip) || []).filter(t => now - t < WINDOW);
+  if (arr.length >= LIMIT) {
+    if (SLACK_HOOK && arr.length === LIMIT) alertSlack(`🚫 Rate-limit desde ${ip}`);
+    return res.status(429).json({ error: 'rate' });
   }
   arr.push(now); hits.set(ip, arr);
 
-  /* 2 ─── Parse FormData ———————————————————— */
-  const form = await req.formData();                 // Next.js / Vercel Edge
-  const get  = k => form.get(k) || '';
+  /* 2 ▪ Parsear multipart/form-data con Busboy */
+  const campos = {};
+  const busboy = Busboy({ headers: req.headers });
+  busboy.on('field', (name, val) => { campos[name] = val.trim(); });
+  busboy.on('finish', () => procesar(campos, ip, res));
+  req.pipe(busboy);
+}
 
-  const datos = {
-    nombre:   get('nombre').trim(),
-    apellido: get('apellido').trim(),
-    dni:      get('dni').trim(),
-    codArea:  get('codArea').trim(),
-    numeroTelefono: get('numeroTelefono').trim(),
-    email:    get('email').trim(),
-    direccion:get('direccion').trim(),
-    comentarios:get('comentarios').trim(),
-    zona:     get('zona')   || 'Pendiente',
-    estado:   get('estado') || 'Pendiente',
-    lista:    get('lista')  || '',
-    token:    get('g-recaptcha-response') || ''
-  };
+/* ———————————————————————————————————————————————— */
+/*  Funciones auxiliares                                                     */
+/* ———————————————————————————————————————————————— */
+async function procesar(f, ip, res) {
 
-  /* 3 ─── Validaciones espejo ————————————————— */
-  if (!RX.nombre.test(datos.nombre))           return res.json({error:'nombre_invalido'});
-  if (!RX.apellido.test(datos.apellido))       return res.json({error:'apellido_invalido'});
-  if (!RX.dni.test(datos.dni))                 return res.json({error:'dni_invalido'});
-  if (!RX.area.test(datos.codArea) ||
-      !RX.num.test(datos.numeroTelefono))      return res.json({error:'tel_invalido'});
-  if (!RX.email.test(datos.email))             return res.json({error:'email_invalido'});
-  if (!RX.direccion.test(datos.direccion))     return res.json({error:'dir_invalida'});
-  if (!RX.comentarios.test(datos.comentarios)) return res.json({error:'comentarios'});
+  /* Validaciones espejo */
+  if (!RX.nombre.test(f.nombre))           return res.json({error:'nombre_invalido'});
+  if (!RX.apellido.test(f.apellido))       return res.json({error:'apellido_invalido'});
+  if (!RX.dni.test(f.dni))                 return res.json({error:'dni_invalido'});
+  if (!RX.area.test(f.codArea) ||
+      !RX.num.test(f.numeroTelefono))      return res.json({error:'tel_invalido'});
+  if (!RX.email.test(f.email))             return res.json({error:'email_invalido'});
+  if (!RX.direccion.test(f.direccion))     return res.json({error:'dir_invalida'});
+  if (!RX.comentarios.test(f.comentarios)) return res.json({error:'comentarios'});
 
-  /* 4 ─── reCAPTCHA v2 invisible ——————————— */
-  const rec = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+  /* Verificar reCAPTCHA v2 Invisible */
+  const token = f['g-recaptcha-response'] || '';
+  const rc = await fetch('https://www.google.com/recaptcha/api/siteverify', {
     method:'POST',
-    body: new URLSearchParams({ secret:RECAPTCHA_SECRET, response:datos.token })
-  }).then(r=>r.json());
+    body: new URLSearchParams({ secret: RECAPTCHA_SECRET, response: token })
+  }).then(r=>r.json()).catch(()=>({success:false}));
 
-  if (!rec.success) return res.json({ error:'recaptcha' });
+  if (!rc.success) return res.json({ error:'recaptcha' });
 
-  /* 5 ─── Construir payload normalizado para GAS — */
-  const payload = {
-    nombre: datos.nombre,
-    apellido: datos.apellido,
-    dni: datos.dni,
-    tel: '549' + datos.codArea + datos.numeroTelefono,
-    email: datos.email,
-    direccion: datos.direccion,
-    comentarios: datos.comentarios,
-    zona: datos.zona,
-    estado: datos.estado,
-    lista: datos.lista,
+  /* Armar payload normalizado para GAS */
+  const body = {
+    nombre:   f.nombre,
+    apellido: f.apellido,
+    dni:      f.dni,
+    tel:      '549' + f.codArea + f.numeroTelefono,
+    email:    f.email,
+    direccion:f.direccion,
+    comentarios:f.comentarios,
+    zona:     f.zona   || 'Pendiente',
+    estado:   f.estado || 'Pendiente',
+    lista:    f.lista  || '',
     ip
   };
 
-  /* 6 ─── Enviar a GAS ———————————————— */
-  const gasResp = await fetch(GAS_URL, {
+  /* Enviar a GAS */
+  const gas = await fetch(GAS_URL, {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(payload)
-  }).then(r=>r.json());
+    body: JSON.stringify(body)
+  }).then(r=>r.json()).catch(()=>({error:'gas'}));
 
-  /* 7 ─── Propagar duplicados / éxito ——————— */
-  if (gasResp.error) {
-    if (gasResp.error.startsWith('duplicado')) notify(ip, gasResp.error);
-    return res.json(gasResp);         // {error:'duplicado_dni', …}
+  /* Alertar duplicados (opcional) */
+  if (gas.error && gas.error.startsWith('duplicado')) {
+    alertSlack(`⚠️ ${gas.error} desde ${ip}`);
   }
 
-  return res.json({ ok:true });
+  res.json(gas);           // { ok:true }  o  { error:'duplicado_dni' } …
 }
 
-/* — Alerta opcional a Slack/Discord — */
-function notify(ip, type){
-  const hook = process.env.SLACK_HOOK;
-  if (!hook) return;
-  fetch(hook, {
+function alertSlack(text){
+  if (!SLACK_HOOK) return;
+  fetch(SLACK_HOOK, {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ text:`⚠️ ${type} desde ${ip}` })
+    body: JSON.stringify({ text })
   }).catch(()=>{});
 }
