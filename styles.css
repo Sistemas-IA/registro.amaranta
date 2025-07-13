@@ -1,8 +1,0 @@
-body{font-family:system-ui,sans-serif;margin:0;padding:1rem}
-form{display:block;max-width:420px;margin:0 auto}
-input,textarea,button{display:block;margin-bottom:.35rem;padding:.5rem;font-size:1rem}
-small.error-msg{color:crimson;font-size:.8rem;margin:-.25rem 0 .25rem;display:none}
-button[disabled]{opacity:.6;cursor:not-allowed;pointer-events:none}
-#form-msg{margin-top:.5rem;padding:.5rem;border-radius:4px}
-#form-msg.ok{background:#e6ffed;color:#076100}
-#form-msg.err{background:#ffe6e6;color:#8a0b0b}
