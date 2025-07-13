@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Formulario de Registro</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+</head>
+<body>
+  <form id="registro-form">
+    <input name="nombre" placeholder="Nombre" required />
+    <small class="error-msg"></small>
+
+    <input name="apellido" placeholder="Apellido" required />
+    <small class="error-msg"></small>
+
+    <input name="dni" placeholder="DNI (8 dígitos)" required />
+    <small class="error-msg"></small>
+
+    <input id="codArea" name="codArea" placeholder="Código de área" required />
+    <small class="error-msg"></small>
+
+    <input id="numeroTelefono" name="numeroTelefono" placeholder="Número de teléfono" required />
+    <small class="error-msg"></small>
+
+    <input name="email" placeholder="Email" required />
+    <small class="error-msg"></small>
+
+    <input name="direccion" placeholder="Dirección" required />
+    <small class="error-msg"></small>
+
+    <textarea name="comentarios" placeholder="Comentarios (opcional)"></textarea>
+    <small class="error-msg"></small>
+
+    <input name="zona" tabindex="-1" style="display:none" />
+    <input name="estado" tabindex="-1" style="display:none" />
+    <input id="lista" name="lista" type="hidden" />
+
+    <button class="g-recaptcha"
+            data-sitekey="6LdNAXUrAAAAAIz5Vi5nLnkSHF-fjoTXPSKa2x6y"
+            data-callback="onSubmit"
+            data-size="invisible"
+            data-badge="bottomright"
+            disabled>Enviar</button>
+  </form>
+
+  <div id="form-msg" hidden></div>
+  <script type="module" src="form.js"></script>
+</body>
+</html>
