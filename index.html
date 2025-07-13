@@ -9,9 +9,13 @@
   <style>
     body  { font-family: system-ui, sans-serif; margin:0; padding:1rem; }
     form  { display:block; max-width:420px; margin:0 auto; }
-    input, textarea, button { display:block; margin-bottom:.35rem; padding:.5rem; font-size:1rem; }
+    input, textarea, button {
+      display:block; margin-bottom:.35rem; padding:.5rem; font-size:1rem;
+    }
     small.error-msg { color:crimson; font-size:.8rem; margin:-.25rem 0 .25rem; display:none; }
-    button[disabled] { opacity:.6; cursor:not-allowed; }
+    button[disabled] {          /* estado gris */
+      opacity:.6; cursor:not-allowed; pointer-events:none;
+    }
   </style>
 </head>
 <body>
@@ -53,7 +57,7 @@
       data-callback="onSubmit"
       data-size="invisible"
       data-badge="bottomright"
-      disabled>          <!-- ← ahora arranca deshabilitado -->
+      disabled>      <!-- ← arranca deshabilitado -->
       Enviar
     </button>
   </form>
@@ -67,8 +71,8 @@
     codArea:        /^\d{2,4}$/,
     numeroTelefono: /^\d{7,9}$/,
     email:          /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
-    direccion:      /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ.,#\/º°()\-\s]{5,100}$/,  // ← regex con # / º ° ( )
-    comentarios:    /^.{0,300}$/      // opcional
+    direccion:      /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ.,#\/º°()\-\s]{5,100}$/,
+    comentarios:    /^.{0,300}$/           // opcional
   };
 
   const form      = document.getElementById('registro-form');
@@ -125,8 +129,11 @@
     submitBtn.disabled = !allValid;
   }
 
-  /* Botón ya está disabled en el HTML; confirmamos estado inicial */
-  toggleSubmit();
+  /* —— Asegurar estado del botón después de que reCAPTCHA re-renderiza —— */
+  window.addEventListener('load', () => {
+    submitBtn.disabled = true;  // fuerza deshabilitado
+    toggleSubmit();             // y revisa campos
+  });
 
   /* Submit */
   form.addEventListener('submit', e => {
