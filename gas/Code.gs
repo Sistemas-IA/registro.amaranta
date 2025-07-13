@@ -16,8 +16,18 @@ const PATTERNS = {
   telefono: /^549\d{9,13}$/,                 // ya normalizado
   email: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
   direccion: /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ.,#\/º°()\-\s]{5,100}$/,
-  comentarios: /^.{0,300}$/
+  comentarios: /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ., ()\n\r-]{0,300}$/,
 };
+/* ——— Sanitización anti‑XSS ——— */
+function htmlEscape(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 
 /* ——— Helpers ——— */
 function esc(value) {
@@ -78,8 +88,8 @@ function doPost(e) {
       dni:          esc(data.dni),
       telefono:     esc(data.telefono),
       email:        esc(data.email),
-      direccion:    esc(data.direccion),
-      comentarios:  esc(data.comentarios),
+      direccion: htmlEscape(esc(data.direccion)),
+      comentarios: htmlEscape(esc(data.comentarios)),
       zona:         'Pendiente',
       estado:       'Pendiente',
       lista:        esc(data.lista),
