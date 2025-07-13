@@ -65,16 +65,16 @@
   </form>
 
   <script>
-  /* Patrones de validación */
+  /* Patrones de validación (un solo \ en cada escape) */
   const patterns = {
-    nombre:         /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\-\\s]{2,30}$/,
-    apellido:       /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\-\\s]{2,30}$/,
-    dni:            /^\\d{8}$/,
-    codArea:        /^\\d{2,4}$/,
-    numeroTelefono: /^\\d{7,9}$/,
-    email:          /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/,
-    direccion:      /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ.,#\\/º°()\\-\\s]{5,100}$/,
-    comentarios:    /^.{0,300}$/           // opcional
+    nombre:         /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,30}$/,
+    apellido:       /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,30}$/,
+    dni:            /^\d{8}$/,
+    codArea:        /^\d{2,4}$/,
+    numeroTelefono: /^\d{7,9}$/,
+    email:          /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
+    direccion:      /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ.,#\/º°()\-\s]{5,100}$/,
+    comentarios:    /^.{0,300}$/          // opcional
   };
 
   const form      = document.getElementById('registro-form');
@@ -91,7 +91,7 @@
     span.style.display = msg ? 'block' : 'none';
   }
 
-  /* Validar un campo (comentarios opcional) */
+  /* Validar un campo */
   function validateInput(input) {
     const key = input.getAttribute('name') || input.id;
     if (!patterns[key]) return true;
@@ -160,7 +160,7 @@
     fetch('/api/register', { method:'POST', body:data })
       .then(r => r.json())
       .then(d => {
-        if (d.error) {                         // ← chequea duplicados u otros
+        if (d.error) {                         // aviso de duplicados u otros
           alert(MSG[d.error] || 'Dato duplicado');
           return;                              // no se resetea el formulario
         }
