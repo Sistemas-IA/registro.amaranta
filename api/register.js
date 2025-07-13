@@ -13,7 +13,7 @@ export default async function handler(req, res) {
 
   const fields = {};
 
-  // Parsear los campos del form usando Busboy
+  /* ─ Parsear los campos del form usando Busboy ─ */
   await new Promise((resolve, reject) => {
     const busboy = Busboy({ headers: req.headers });
 
@@ -27,21 +27,23 @@ export default async function handler(req, res) {
     req.pipe(busboy);
   });
 
+  /* ─ Destructuring: añadimos “lista” ─ */
   const {
     nombre, apellido, dni, telefono,
     email, direccion, comentarios,
+    lista = "",                  // ← NUEVO
     zona = "", estado = "",
     ["g-recaptcha-response"]: recaptchaToken
   } = fields;
 
-  // Verificar honeypot
+  /* ─ Honeypot ─ */
   const honeypotActiva = zona.trim() !== "" || estado.trim() !== "";
   if (honeypotActiva) {
     console.warn("Intento con honeypot activo");
     return res.status(200).json({ message: "Error al enviar, intentá de nuevo más tarde" });
   }
 
-  // Verificar reCAPTCHA con Google
+  /* ─ Verificar reCAPTCHA con Google ─ */
   const verifyResponse = await fetch("https://www.google.com/recaptcha/api/siteverify", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -58,11 +60,10 @@ export default async function handler(req, res) {
     return res.status(200).json({ message: "Error al enviar, intentá de nuevo más tarde" });
   }
 
-
-  // Obtener IP real
+  /* ─ Obtener IP real ─ */
   const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket?.remoteAddress || "";
 
-  // Preparar datos para GAS
+  /* ─ Preparar datos para GAS ─ */
   const GAS_URL = process.env.GAS_ENDPOINT_URL;
   const payload = {
     nombre,
@@ -74,7 +75,7 @@ export default async function handler(req, res) {
     comentarios,
     zona: "Pendiente",
     estado: "Pendiente",
-    lista,
+    lista,                         // ← NUEVO
     timestamp: new Date().toISOString(),
     ip,
   };
