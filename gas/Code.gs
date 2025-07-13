@@ -7,8 +7,8 @@
  * 3) Todas las respuestas en JSON para que el frontend pueda interpretarlas.
  */
 
-const SHEET_ID   = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
-const SHEET_NAME = 'Registros';
+const SHEET_ID   = '18jX4rlx4hOGIa-6whQT0-jDxcU5UoeL0na655rwDxew';
+const SHEET_NAME = 'Clientes';
 
 function doPost(e) {
   const lock = LockService.getScriptLock();
