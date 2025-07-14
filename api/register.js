@@ -91,7 +91,7 @@ export default async function handler(req, res) {
 
   if (hHits > 5 || dHits > 20) {
     res.setHeader('Retry-After', hHits > 5 ? 3600 : 86400);
-    return res.status(429).json({ error: 'Demasiados intentos' });
+    return res.status(429).json({ error: 'rate_limit' });
   }
 
   /* ─ Parsear multipart ─ */
