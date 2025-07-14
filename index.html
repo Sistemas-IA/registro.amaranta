@@ -11,13 +11,9 @@
   <style>
     body  { font-family: system-ui, sans-serif; margin:0; padding:1rem; }
     form  { display:block; max-width:420px; margin:0 auto; }
-    input, textarea, button {
-      display:block; margin-bottom:.35rem; padding:.5rem; font-size:1rem;
-    }
+    input, textarea, button { display:block; margin-bottom:.35rem; padding:.5rem; font-size:1rem; }
     small.error-msg { color:crimson; font-size:.8rem; margin:-.25rem 0 .25rem; display:none; }
-    button[disabled] {
-      opacity:.6; cursor:not-allowed; pointer-events:none;
-    }
+    button[disabled] { opacity:.6; cursor:not-allowed; pointer-events:none; }
   </style>
 </head>
 <body>
@@ -74,7 +70,7 @@
     numeroTelefono: /^\d{7,9}$/,
     email:          /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
     direccion:      /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ.,#\/º°()\-\s]{5,100}$/,
-    comentarios: /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ., ()\/#º°\n\r-]{0,300}$/          // opcional
+    comentarios:    /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ., ()\/#º°\n\r-]{0,300}$/      // opcional
   };
 
   const form      = document.getElementById('registro-form');
@@ -167,7 +163,8 @@
 
         alert(d.message || MSG.ok);             // Éxito real
         form.reset();
-        submitBtn.disabled = true;
+        grecaptcha.reset();                     // ← línea nueva
+        submitBtn.disabled = true;              // se rehabiilitará con toggleSubmit()
       })
       .catch(() => alert('Error al enviar, intentá de nuevo más tarde'));
   }
