@@ -5,19 +5,21 @@
  */
 
 /* ——— Config ——— */
-const SHEET_ID   = '18jX4rlx4hOGIa-6whQT0-jDxcU5UoeL0na655rwDxew';
-const SHEET_NAME = 'Clientes';
+const props      = PropertiesService.getScriptProperties();
+const SHEET_ID   = props.getProperty('SHEET_ID');
+const SHEET_NAME = props.getProperty('SHEET_NAME');
 
 /* ——— Patrones (mismos que frontend y API) ——— */
 const PATTERNS = {
-  nombre: /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,30}$/,
-  apellido: /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,30}$/,
-  dni: /^\d{8}$/,
+  nombre: /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,30}$/,  
+  apellido: /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,30}$/,  
+  dni: /^\d{8}$/,  
   telefono: /^549\d{9,13}$/,                 // ya normalizado
-  email: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
-  direccion: /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ.,#\/º°()\-\s]{5,100}$/,
-  comentarios: /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ., ()\/#º°\n\r-]{0,300}$/,
+  email: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,   
+  direccion: /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ.,#\/º°()\-\s]{5,100}$/,  
+  comentarios: /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ., ()\/\#º°\n\r\-]{0,300}$/,  
 };
+
 /* ——— Sanitización anti‑XSS ——— */
 function htmlEscape(str) {
   return String(str)
@@ -27,7 +29,6 @@ function htmlEscape(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#x27;');
 }
-
 
 /* ——— Helpers ——— */
 function esc(value) {
@@ -88,8 +89,8 @@ function doPost(e) {
       dni:          esc(data.dni),
       telefono:     esc(data.telefono),
       email:        esc(data.email),
-      direccion: htmlEscape(esc(data.direccion)),
-      comentarios: htmlEscape(esc(data.comentarios)),
+      direccion:    htmlEscape(esc(data.direccion)),
+      comentarios:  htmlEscape(esc(data.comentarios)),
       zona:         'Pendiente',
       estado:       'Pendiente',
       lista:        esc(data.lista),
