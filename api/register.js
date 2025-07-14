@@ -5,7 +5,7 @@ export const config = { api: { bodyParser: false } };
 // ── Configuración / Parámetros ──
 const ALLOWED_HOST         = 'registro.amaranta.ar';
 const RATE_LIMIT_HOURLY   = 10;     // envíos IP por hora
-const RATE_LIMIT_DAILY    = 20;    // envíos IP por día
+const RATE_LIMIT_DAILY    = 50;    // envíos IP por día
 const RATE_LIMIT_GLOBAL   = 5000;  // envíos totales por día
 const TTL_HOURLY          = 3600;  // segundos
 const TTL_DAILY           = 86400; // segundos
