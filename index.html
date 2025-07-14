@@ -4,16 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Formulario de Registro</title>
-
-  <!-- CSP ampliada para reCAPTCHA -->
-  <meta http-equiv="Content-Security-Policy"
-        content="
-          default-src 'self';
-          script-src 'self' https://www.google.com https://www.gstatic.com;
-          frame-src https://www.google.com/recaptcha/ https://www.google.com;
-          style-src 'self' 'unsafe-inline' https://www.gstatic.com;
-          connect-src 'self' https://www.google.com/recaptcha/ https://www.gstatic.com;
-        ">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.google.com https://www.gstatic.com; frame-src https://www.google.com/recaptcha/ https://www.google.com; style-src 'self' 'unsafe-inline' https://www.gstatic.com; connect-src 'self' https://www.google.com/recaptcha/ https://www.gstatic.com;">
 
   <!-- reCAPTCHA v2 invisible -->
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
