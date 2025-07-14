@@ -115,8 +115,8 @@ export default async function handler(req, res) {
     headers:{ "Content-Type":"application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       secret: process.env.RECAPTCHA_SECRET_KEY,
-      response: recaptchaToken,
-      remoteip: ip            // ← añadido
+      response: recaptchaToken
+      // sin remoteip
     }),
   }).then(r => r.json()).catch(()=>({success:false}));
 
