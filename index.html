@@ -73,7 +73,7 @@
     numeroTelefono: /^\d{7,9}$/,
     email:          /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
     direccion:      /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ.,#\/º°()\-\s]{5,100}$/,
-    comentarios:    /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ., ()\/#º°\n\r-]{0,300}$/
+    comentarios:    /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ., ()\/#º°\n\r\-]{0,300}$/
   };
 
   const MSG = {
@@ -122,6 +122,9 @@
   }
   window.addEventListener('load', () => { submitBtn.disabled = true; toggleSubmit(); });
 
++  // Variable global para retener el token v3
++  let v3Token = '';
+
   /* —— Nuevo flujo: v3 → v2 —— */
   form.addEventListener('submit', async e => {
     e.preventDefault();
@@ -129,6 +132,7 @@
 
     // 1) Pedimos token v3
     const tokenV3 = await grecaptcha.execute('6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp', { action: 'submit' });
++    v3Token = tokenV3;
 
     // 2) Enviamos TODOS los campos + tokenV3 al server
     const data = new FormData(form);
@@ -156,8 +160,11 @@
   /* Callback reCAPTCHA v2 Invisible */
   function onSubmit(tokenV2) {
     const data = new FormData(form);
-    // solo tokenV2: el v3 ya pasó en el primer paso
-    data.append('g-recaptcha-response', tokenV2);
+-    // solo tokenV2: el v3 ya pasó en el primer paso
+-    data.append('g-recaptcha-response', tokenV2);
++    // reenviamos también el v3 guardado + tokenV2
++    data.append('tokenV3', v3Token);
++    data.append('g-recaptcha-response', tokenV2);
 
     fetch('/api/register', { method:'POST', body:data })
       .then(r => r.json())
