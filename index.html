@@ -15,7 +15,7 @@
   </style>
 </head>
 <body>
-  <form id="registro-form">
+  <form id="registro-form" novalidate>
     <input name="nombre" placeholder="Nombre" required /><small class="error-msg"></small>
     <input name="apellido" placeholder="Apellido" required /><small class="error-msg"></small>
     <input name="dni" placeholder="DNI (8 dígitos)" required /><small class="error-msg"></small>
@@ -54,51 +54,79 @@
     };
     const form = document.getElementById('registro-form');
     const submitBtn = form.querySelector('button.g-recaptcha');
+    const touched = new Set();
 
     // Rellena lista desde ?l=
     document.getElementById('lista').value =
       new URLSearchParams(location.search).get('l') || '';
 
-    // Mostrar u ocultar mensaje de error bajo cada campo
     function showError(input, msg) {
       const span = input.nextElementSibling;
       span.textContent = msg;
       span.style.display = msg ? 'block' : 'none';
     }
 
-    // Validar un campo según patrón
-    function validateInput(input) {
+    function validateInput(input, onSubmitCheck = false) {
       const key = input.name || input.id;
-      if (!patterns[key]) return true;
       const val = input.value.trim();
       const required = key !== 'comentarios';
-      const passes = val === '' ? false : patterns[key].test(val);
-      const valid = required ? (val !== '' && passes) : (val === '' || passes);
-      showError(input, !valid ? 'Valor inválido' : '');
-      return valid;
+      const pattern = patterns[key];
+
+      // Si está vacío:
+      if (val === '') {
+        if (onSubmitCheck && required) {
+          showError(input, 'Requerido');
+          return false;
+        }
+        // no mostrar error en blur/input, sólo en submit
+        showError(input, '');
+        return !required;
+      }
+
+      // Si hay patrón, probarlo
+      if (pattern && !pattern.test(val)) {
+        showError(input, 'Valor inválido');
+        return false;
+      }
+
+      showError(input, '');
+      return true;
     }
 
-    // Habilitar o deshabilitar el botón
     function toggleSubmit() {
-      const allValid = [...form.querySelectorAll('input, textarea')]
+      // Sólo habilitar si TODOS los required están completos y válidos
+      const valid = [...form.querySelectorAll('input, textarea')]
         .filter(el => el.type !== 'hidden')
-        .every(validateInput);
-      submitBtn.disabled = !allValid;
+        .every(el => validateInput(el, false));
+      submitBtn.disabled = !valid;
     }
 
-    // Eventos de validación en blur e input
+    // Blur/Input: marcar touched y validar suavemente
     form.querySelectorAll('input, textarea').forEach(el => {
       if (el.type === 'hidden') return;
-      el.addEventListener('blur', () => { validateInput(el); toggleSubmit(); });
-      el.addEventListener('input', () => { validateInput(el); toggleSubmit(); });
+      el.addEventListener('blur', () => {
+        touched.add(el);
+        validateInput(el, false);
+        toggleSubmit();
+      });
+      el.addEventListener('input', () => {
+        if (touched.has(el)) validateInput(el, false);
+        toggleSubmit();
+      });
     });
 
     window.addEventListener('load', () => { toggleSubmit(); });
 
-    // Evitar envío estándar y disparar reCAPTCHA
     form.addEventListener('submit', e => {
       e.preventDefault();
-      if (submitBtn.disabled) return;
+      // En el submit, validamos todos con onSubmitCheck=true
+      let allGood = true;
+      form.querySelectorAll('input, textarea').forEach(el => {
+        if (el.type === 'hidden') return;
+        const ok = validateInput(el, true);
+        if (!ok) allGood = false;
+      });
+      if (!allGood) return;
       grecaptcha.execute();
     });
 
@@ -115,14 +143,11 @@
       ok:              'Formulario enviado correctamente'
     };
 
-    // Callback de reCAPTCHA
     async function onSubmit(token) {
-      // Recopilar datos
       const data = {};
       new FormData(form).forEach((v, k) => data[k] = v.trim());
       data['g-recaptcha-response'] = token;
 
-      // Enviar JSON a la API
       const resp = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -131,16 +156,15 @@
       const d = await resp.json();
 
       if (d.error) {
-        // Mostrar código y mensaje amigable
         alert(`Error: ${d.error}\n${MSG[d.error] || 'Error desconocido'}`);
         grecaptcha.reset();
         return;
       }
 
-      // Éxito
       alert(MSG.ok);
       form.reset();
       grecaptcha.reset();
+      touched.clear();
       toggleSubmit();
     }
   </script>
