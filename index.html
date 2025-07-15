@@ -41,7 +41,6 @@
   </form>
 
   <script>
-    // Patrones de validación
     const patterns = {
       nombre:         /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,30}$/,
       apellido:       /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,30}$/,
@@ -66,25 +65,24 @@
       span.style.display = msg ? 'block' : 'none';
     }
 
-    function validateInput(input, onSubmitCheck = false) {
+    // onSubmitCheck = true => tratar campo vacío como error
+    function validateField(input, onSubmitCheck) {
       const key = input.name || input.id;
       const val = input.value.trim();
       const required = key !== 'comentarios';
-      const pattern = patterns[key];
 
-      // Si está vacío:
+      // vacío
       if (val === '') {
         if (onSubmitCheck && required) {
           showError(input, 'Requerido');
           return false;
         }
-        // no mostrar error en blur/input, sólo en submit
         showError(input, '');
         return !required;
       }
 
-      // Si hay patrón, probarlo
-      if (pattern && !pattern.test(val)) {
+      // patrón
+      if (patterns[key] && !patterns[key].test(val)) {
         showError(input, 'Valor inválido');
         return false;
       }
@@ -94,23 +92,23 @@
     }
 
     function toggleSubmit() {
-      // Sólo habilitar si TODOS los required están completos y válidos
-      const valid = [...form.querySelectorAll('input, textarea')]
+      // enable only if all required are non-empty and match pattern
+      const allValid = [...form.querySelectorAll('input, textarea')]
         .filter(el => el.type !== 'hidden')
-        .every(el => validateInput(el, false));
-      submitBtn.disabled = !valid;
+        .every(el => validateField(el, true));
+      submitBtn.disabled = !allValid;
     }
 
-    // Blur/Input: marcar touched y validar suavemente
+    // blur/input: validate lightly (no empty error)
     form.querySelectorAll('input, textarea').forEach(el => {
       if (el.type === 'hidden') return;
       el.addEventListener('blur', () => {
         touched.add(el);
-        validateInput(el, false);
+        validateField(el, false);
         toggleSubmit();
       });
       el.addEventListener('input', () => {
-        if (touched.has(el)) validateInput(el, false);
+        if (touched.has(el)) validateField(el, false);
         toggleSubmit();
       });
     });
@@ -119,18 +117,16 @@
 
     form.addEventListener('submit', e => {
       e.preventDefault();
-      // En el submit, validamos todos con onSubmitCheck=true
-      let allGood = true;
+      // final check and fire captcha
+      let ok = true;
       form.querySelectorAll('input, textarea').forEach(el => {
         if (el.type === 'hidden') return;
-        const ok = validateInput(el, true);
-        if (!ok) allGood = false;
+        if (!validateField(el, true)) ok = false;
       });
-      if (!allGood) return;
+      if (!ok) return;
       grecaptcha.execute();
     });
 
-    // Mensajes de error y éxito
     const MSG = {
       duplicado_dni:   'Ese DNI ya existe.',
       duplicado_tel:   'Ese teléfono ya está registrado.',
