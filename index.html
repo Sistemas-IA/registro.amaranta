@@ -7,7 +7,7 @@
 
   <!-- reCAPTCHA v3 (background scoring) -->
   <script src="https://www.google.com/recaptcha/api.js?render=6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp"></script>
-  <!-- reCAPTCHA v2 Invisible (solo si baja del umbral) -->
+  <!-- reCAPTCHA v2 Invisible -->
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
   <style>
@@ -20,99 +20,60 @@
 </head>
 <body>
   <form id="registro-form">
-    <input name="nombre"          placeholder="Nombre"             required />
-    <small class="error-msg"></small>
-
-    <input name="apellido"        placeholder="Apellido"           required />
-    <small class="error-msg"></small>
-
-    <input name="dni"             placeholder="DNI (8 dígitos)"    required />
-    <small class="error-msg"></small>
-
-    <input id="codArea"           name="codArea"        placeholder="Código de área"   required />
-    <small class="error-msg"></small>
-
-    <input id="numeroTelefono"    name="numeroTelefono" placeholder="Número de teléfono" required />
-    <small class="error-msg"></small>
-
-    <input name="email"           placeholder="Email"              required />
-    <small class="error-msg"></small>
-
-    <input name="direccion"       placeholder="Dirección"          required />
-    <small class="error-msg"></small>
-
-    <textarea name="comentarios"  placeholder="Comentarios (opcional)"></textarea>
-    <small class="error-msg"></small>
-
-    <!-- Honeypots -->
+    <input name="nombre" placeholder="Nombre" required /><small class="error-msg"></small>
+    <input name="apellido" placeholder="Apellido" required /><small class="error-msg"></small>
+    <input name="dni" placeholder="DNI (8 dígitos)" required /><small class="error-msg"></small>
+    <input id="codArea" name="codArea" placeholder="Código de área" required /><small class="error-msg"></small>
+    <input id="numeroTelefono" name="numeroTelefono" placeholder="Número de teléfono" required /><small class="error-msg"></small>
+    <input name="email" placeholder="Email" required /><small class="error-msg"></small>
+    <input name="direccion" placeholder="Dirección" required /><small class="error-msg"></small>
+    <textarea name="comentarios" placeholder="Comentarios (opcional)"></textarea><small class="error-msg"></small>
     <input name="zona"   tabindex="-1" style="display:none" />
     <input name="estado" tabindex="-1" style="display:none" />
-
-    <!-- Campo oculto lista -->
     <input id="lista" name="lista" type="hidden" />
-
-    <!-- Botón reCAPTCHA v2 Invisible -->
-    <button id="submitBtn" 
-            class="g-recaptcha"
-            data-sitekey="6LdNAXUrAAAAAIz5Vi5nLnkSHF-fjoTXPSKa2x6y"
-            data-callback="onSubmit"
-            data-size="invisible"
-            data-badge="bottomright"
-            disabled>
-      Enviar
-    </button>
+    <button id="submitBtn" type="button" disabled>Enviar</button>
   </form>
 
   <script>
-  /* Patrones y validación (idéntico a tu versión) */
+  /* Patrones y validación */
   const patterns = {
-    nombre:         /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,30}$/,
-    apellido:       /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,30}$/,
-    dni:            /^\d{8}$/,
-    codArea:        /^\d{2,4}$/,
+    nombre: /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,30}$/,
+    apellido: /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,30}$/,
+    dni: /^\d{8}$/,
+    codArea: /^\d{2,4}$/,
     numeroTelefono: /^\d{7,9}$/,
-    email:          /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
-    direccion:      /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ.,#\/º°()\-\s]{5,100}$/,
-    comentarios:    /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ., ()\/#º°\n\r\-]{0,300}$/
-  };
-
+    email: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
+    direccion: /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ.,#\/º°()\-\s]{5,100}$/,
+    comentarios: /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ., ()\/#º°\n\r\-]{0,300}$/
+  };  
   const MSG = {
-    duplicado_dni:   'Ese DNI ya existe.',
-    duplicado_tel:   'Teléfono ya registrado.',
+    duplicado_dni: 'Ese DNI ya existe.',
+    duplicado_tel: 'Teléfono ya registrado.',
     duplicado_email: 'E-mail ya registrado.',
-    rate_limit:      'Demasiados intentos, por favor esperá un rato.',
-    ok:              'Formulario enviado correctamente',
-    recaptcha:       'Error en verificación humana'
+    rate_limit: 'Demasiados intentos, por favor esperá un rato.',
+    ok: 'Formulario enviado correctamente',
+    recaptcha: 'Error en verificación humana'
   };
 
-  const form      = document.getElementById('registro-form');
+  const form = document.getElementById('registro-form');
   const submitBtn = document.getElementById('submitBtn');
+  document.getElementById('lista').value = new URLSearchParams(location.search).get('l') || '';
 
-  /* Rellenar lista desde ?l= */
-  document.getElementById('lista').value =
-    new URLSearchParams(location.search).get('l') ?? '';
-
-  /* Validación inline */
   function showError(input, msg) {
-    const span = input.nextElementSibling;
-    span.textContent = msg;
-    span.style.display = msg ? 'block' : 'none';
+    const span = input.nextElementSibling; span.textContent = msg; span.style.display = msg ? 'block' : 'none';
   }
   function validateInput(input) {
-    const key = input.name || input.id;
+    const key = input.name, val = input.value.trim();
     if (!patterns[key]) return true;
-    const val      = input.value.trim();
-    const touched  = input.dataset.touched === 'true';
-    const required = key !== 'comentarios';
-    const passes   = val === '' ? false : patterns[key].test(val);
-    const valid    = required ? (val !== '' && passes) : (val === '' || passes);
-    showError(input, touched && val !== '' && !passes ? 'Valor inválido' : '');
+    const passes = val !== '' && patterns[key].test(val);
+    const valid = key !== 'comentarios' ? (val !== '' && passes) : true;
+    showError(input, val !== '' && !passes ? 'Valor inválido' : '');
     return valid;
   }
   form.querySelectorAll('input, textarea').forEach(el => {
     if (el.type === 'hidden') return;
-    el.addEventListener('blur', () => { el.dataset.touched = 'true'; validateInput(el); toggleSubmit(); });
     el.addEventListener('input', () => { validateInput(el); toggleSubmit(); });
+    el.addEventListener('blur', () => { validateInput(el); toggleSubmit(); });
   });
   function toggleSubmit() {
     const allValid = [...form.querySelectorAll('input, textarea')]
@@ -120,68 +81,57 @@
       .every(validateInput);
     submitBtn.disabled = !allValid;
   }
-  window.addEventListener('load', () => { submitBtn.disabled = true; toggleSubmit(); });
+  window.addEventListener('load', toggleSubmit);
 
-+  // Variable global para retener el token v3
-+  let v3Token = '';
+  // Variables para tokens y widget
+  let v3Token = '';
+  let v2WidgetId;
 
-  /* —— Nuevo flujo: v3 → v2 —— */
-  form.addEventListener('submit', async e => {
-    e.preventDefault();
-    if (submitBtn.disabled) return;
-
-    // 1) Pedimos token v3
-    const tokenV3 = await grecaptcha.execute('6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp', { action: 'submit' });
-+    v3Token = tokenV3;
-
-    // 2) Enviamos TODOS los campos + tokenV3 al server
-    const data = new FormData(form);
-    data.append('tokenV3', tokenV3);
-
-    const res  = await fetch('/api/register', { method:'POST', body:data });
-    const json = await res.json();
-
-    if (json.needV2) {
-      // 3) Si el server pide v2, disparamos reto invisible
-      grecaptcha.execute();
-    } else if (json.error) {
-      // 4) Error (rate, duplicados, o recaptcha)
-      alert(MSG[json.error] || json.error);
-      grecaptcha.reset();
-    } else {
-      // 5) Éxito
-      alert(MSG.ok);
-      form.reset();
-      grecaptcha.reset();
-      submitBtn.disabled = true;
-    }
+  // Render invisible v2 widget
+  grecaptcha.ready(() => {
+    v2WidgetId = grecaptcha.render(submitBtn, {
+      'sitekey': '6LdNAXUrAAAAAIz5Vi5nLnkSHF-fjoTXPSKa2x6y',
+      'size': 'invisible',
+      'badge': 'bottomright',
+      'callback': onSubmit
+    });
   });
 
-  /* Callback reCAPTCHA v2 Invisible */
+  // Paso 1: disparar v3 y enviar a backend
+  submitBtn.addEventListener('click', () => {
+    if (submitBtn.disabled) return;
+    grecaptcha.ready(() => {
+      grecaptcha.execute('6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp', { action: 'submit' })
+        .then(token => {
+          v3Token = token;
+          const data = new FormData(form);
+          data.append('tokenV3', v3Token);
+          fetch('/api/register', { method:'POST', body:data })
+            .then(r => r.json())
+            .then(json => {
+              if (json.needV2) grecaptcha.execute(v2WidgetId);
+              else if (json.error) { alert(MSG[json.error]||json.error); grecaptcha.reset(v2WidgetId); }
+              else { alert(MSG.ok); form.reset(); toggleSubmit(); grecaptcha.reset(v2WidgetId); }
+            })
+            .catch(() => { alert('Error al enviar, intentá luego'); grecaptcha.reset(v2WidgetId); });
+        });
+    });
+  });
+
+  // Callback v2 Invisible
   function onSubmit(tokenV2) {
     const data = new FormData(form);
--    // solo tokenV2: el v3 ya pasó en el primer paso
--    data.append('g-recaptcha-response', tokenV2);
-+    // reenviamos también el v3 guardado + tokenV2
-+    data.append('tokenV3', v3Token);
-+    data.append('g-recaptcha-response', tokenV2);
-
+    data.append('tokenV3', v3Token);
+    data.append('g-recaptcha-response', tokenV2);
     fetch('/api/register', { method:'POST', body:data })
       .then(r => r.json())
-      .then(d => {
-        if (d.error) {
-          alert(MSG[d.error] || d.error);
-        } else {
-          alert(MSG.ok);
-          form.reset();
-        }
-        grecaptcha.reset();
-        submitBtn.disabled = true;
+      .then(json => {
+        if (json.error) alert(MSG[json.error]||json.error);
+        else { alert(MSG.ok); form.reset(); }
+        toggleSubmit();
+        grecaptcha.reset(v2WidgetId);
       })
-      .catch(() => {
-        alert('Error al enviar, intentá luego');
-        grecaptcha.reset();
-      });
+      .catch(() => { alert('Error al enviar, intentá luego'); grecaptcha.reset(v2WidgetId); });
   }
   </script>
 </body>
