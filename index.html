@@ -6,7 +6,7 @@
   <title>Formulario de Registro</title>
 
   <!-- reCAPTCHA v3 (background scoring) -->
-  <script src="https://www.google.com/recaptcha/api.js?render=TU_SITE_KEY_V3"></script>
+  <script src="https://www.google.com/recaptcha/api.js?render=6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp"></script>
   <!-- reCAPTCHA v2 Invisible (solo si baja del umbral) -->
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
@@ -51,10 +51,10 @@
     <!-- Campo oculto lista -->
     <input id="lista" name="lista" type="hidden" />
 
-    <!-- Botón sin data-sitekey de v3: lo manejamos por JS -->
+    <!-- Botón reCAPTCHA v2 Invisible -->
     <button id="submitBtn" 
             class="g-recaptcha"
-            data-sitekey="TU_SITE_KEY_V2"
+            data-sitekey="6LdNAXUrAAAAAIz5Vi5nLnkSHF-fjoTXPSKa2x6y"
             data-callback="onSubmit"
             data-size="invisible"
             data-badge="bottomright"
@@ -92,7 +92,7 @@
   document.getElementById('lista').value =
     new URLSearchParams(location.search).get('l') ?? '';
 
-  /* Validación inline (idéntica) */
+  /* Validación inline */
   function showError(input, msg) {
     const span = input.nextElementSibling;
     span.textContent = msg;
@@ -128,7 +128,7 @@
     if (submitBtn.disabled) return;
 
     // 1) Pedimos token v3
-    const tokenV3 = await grecaptcha.execute('TU_SITE_KEY_V3', { action: 'submit' });
+    const tokenV3 = await grecaptcha.execute('6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp', { action: 'submit' });
 
     // 2) Enviamos TODOS los campos + tokenV3 al server
     const data = new FormData(form);
