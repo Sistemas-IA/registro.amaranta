@@ -1,10 +1,10 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Formulario de Registro</title>
+  <!-- reCAPTCHA v2 invisible -->
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <style>
     body { font-family: system-ui, sans-serif; margin:0; padding:1rem; }
@@ -41,6 +41,7 @@
   </form>
 
   <script>
+    // Patrones de validación
     const patterns = {
       nombre:         /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,30}$/,
       apellido:       /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,30}$/,
@@ -58,12 +59,14 @@
     document.getElementById('lista').value =
       new URLSearchParams(location.search).get('l') || '';
 
+    // Mostrar u ocultar mensaje de error bajo cada campo
     function showError(input, msg) {
       const span = input.nextElementSibling;
       span.textContent = msg;
       span.style.display = msg ? 'block' : 'none';
     }
 
+    // Validar un campo según patrón
     function validateInput(input) {
       const key = input.name || input.id;
       if (!patterns[key]) return true;
@@ -75,6 +78,7 @@
       return valid;
     }
 
+    // Habilitar o deshabilitar el botón
     function toggleSubmit() {
       const allValid = [...form.querySelectorAll('input, textarea')]
         .filter(el => el.type !== 'hidden')
@@ -82,6 +86,7 @@
       submitBtn.disabled = !allValid;
     }
 
+    // Eventos de validación en blur e input
     form.querySelectorAll('input, textarea').forEach(el => {
       if (el.type === 'hidden') return;
       el.addEventListener('blur', () => { validateInput(el); toggleSubmit(); });
@@ -90,39 +95,49 @@
 
     window.addEventListener('load', () => { toggleSubmit(); });
 
+    // Evitar envío estándar y disparar reCAPTCHA
     form.addEventListener('submit', e => {
       e.preventDefault();
       if (submitBtn.disabled) return;
       grecaptcha.execute();
     });
 
+    // Mensajes de error y éxito
     const MSG = {
       duplicado_dni:   'Ese DNI ya existe.',
-      duplicado_tel:   'Teléfono ya registrado.',
+      duplicado_tel:   'Ese teléfono ya está registrado.',
       duplicado_email: 'E-mail ya registrado.',
       lista_invalida:  'Lista inválida (1–99).',
-      campos_bot:      'Envio inválido.',
+      campos_bot:      'Envío inválido.',
       recaptcha:       'Fallo en reCAPTCHA.',
       rate_limit:      'Demasiados intentos, esperá un rato.',
+      generic:         'Error inesperado, intentá de nuevo más tarde.',
       ok:              'Formulario enviado correctamente'
     };
 
+    // Callback de reCAPTCHA
     async function onSubmit(token) {
+      // Recopilar datos
       const data = {};
       new FormData(form).forEach((v, k) => data[k] = v.trim());
       data['g-recaptcha-response'] = token;
 
+      // Enviar JSON a la API
       const resp = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
       const d = await resp.json();
+
       if (d.error) {
-        alert(MSG[d.error] || 'Error desconocido');
+        // Mostrar código y mensaje amigable
+        alert(`Error: ${d.error}\n${MSG[d.error] || 'Error desconocido'}`);
         grecaptcha.reset();
         return;
       }
+
+      // Éxito
       alert(MSG.ok);
       form.reset();
       grecaptcha.reset();
