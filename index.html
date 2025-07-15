@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Formulario de Registro</title>
 
-  <!-- reCAPTCHA v3 (background scoring) -->
-  <script src="https://www.google.com/recaptcha/api.js?render=6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp"></script>
-  <!-- reCAPTCHA v2 Invisible -->
-  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  <!-- reCAPTCHA v3 + v2 Invisible en una sola inclusión -->
+  <script src="https://www.google.com/recaptcha/api.js?render=6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp&onload=initRecaptcha" async defer></script>
 
   <style>
     body  { font-family: system-ui, sans-serif; margin:0; padding:1rem; }
@@ -28,14 +26,17 @@
     <input name="email" placeholder="Email" required /><small class="error-msg"></small>
     <input name="direccion" placeholder="Dirección" required /><small class="error-msg"></small>
     <textarea name="comentarios" placeholder="Comentarios (opcional)"></textarea><small class="error-msg"></small>
-    <input name="zona"   tabindex="-1" style="display:none" />
+    <!-- Honeypots -->
+    <input name="zona" tabindex="-1" style="display:none" />
     <input name="estado" tabindex="-1" style="display:none" />
+    <!-- Campo oculto lista -->
     <input id="lista" name="lista" type="hidden" />
+    <!-- Botón invisible recaptcha (renderizado en initRecaptcha) -->
     <button id="submitBtn" type="button" disabled>Enviar</button>
   </form>
 
   <script>
-  /* Patrones y validación */
+  /* Validación */
   const patterns = {
     nombre: /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,30}$/,
     apellido: /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,30}$/,
@@ -45,7 +46,7 @@
     email: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
     direccion: /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ.,#\/º°()\-\s]{5,100}$/,
     comentarios: /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ., ()\/#º°\n\r\-]{0,300}$/
-  };  
+  };
   const MSG = {
     duplicado_dni: 'Ese DNI ya existe.',
     duplicado_tel: 'Teléfono ya registrado.',
@@ -60,78 +61,89 @@
   document.getElementById('lista').value = new URLSearchParams(location.search).get('l') || '';
 
   function showError(input, msg) {
-    const span = input.nextElementSibling; span.textContent = msg; span.style.display = msg ? 'block' : 'none';
+    const span = input.nextElementSibling;
+    span.textContent = msg;
+    span.style.display = msg ? 'block' : 'none';
   }
   function validateInput(input) {
-    const key = input.name, val = input.value.trim();
+    const key = input.name;
     if (!patterns[key]) return true;
+    const val = input.value.trim();
     const passes = val !== '' && patterns[key].test(val);
     const valid = key !== 'comentarios' ? (val !== '' && passes) : true;
     showError(input, val !== '' && !passes ? 'Valor inválido' : '');
     return valid;
   }
-  form.querySelectorAll('input, textarea').forEach(el => {
-    if (el.type === 'hidden') return;
-    el.addEventListener('input', () => { validateInput(el); toggleSubmit(); });
-    el.addEventListener('blur', () => { validateInput(el); toggleSubmit(); });
-  });
   function toggleSubmit() {
     const allValid = [...form.querySelectorAll('input, textarea')]
       .filter(el => el.type !== 'hidden')
       .every(validateInput);
     submitBtn.disabled = !allValid;
   }
+  form.querySelectorAll('input, textarea').forEach(el => {
+    if (el.type !== 'hidden') {
+      el.addEventListener('input', toggleSubmit);
+      el.addEventListener('blur', toggleSubmit);
+    }
+  });
   window.addEventListener('load', toggleSubmit);
 
-  // Variables para tokens y widget
+  /* reCAPTCHA */
   let v3Token = '';
-  let v2WidgetId;
 
-  // Render invisible v2 widget
-  grecaptcha.ready(() => {
-    v2WidgetId = grecaptcha.render(submitBtn, {
-      'sitekey': '6LdNAXUrAAAAAIz5Vi5nLnkSHF-fjoTXPSKa2x6y',
-      'size': 'invisible',
-      'badge': 'bottomright',
-      'callback': onSubmit
+  function initRecaptcha() {
+    // render invisible v2 widget on the button
+    grecaptcha.render('submitBtn', {
+      sitekey: '6LdNAXUrAAAAAIz5Vi5nLnkSHF-fjoTXPSKa2x6y',
+      size: 'invisible',
+      badge: 'bottomright',
+      callback: onSubmit
     });
-  });
+  }
 
-  // Paso 1: disparar v3 y enviar a backend
+  // Step 1: on button click, run v3
   submitBtn.addEventListener('click', () => {
     if (submitBtn.disabled) return;
-    grecaptcha.ready(() => {
-      grecaptcha.execute('6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp', { action: 'submit' })
-        .then(token => {
-          v3Token = token;
-          const data = new FormData(form);
-          data.append('tokenV3', v3Token);
-          fetch('/api/register', { method:'POST', body:data })
-            .then(r => r.json())
-            .then(json => {
-              if (json.needV2) grecaptcha.execute(v2WidgetId);
-              else if (json.error) { alert(MSG[json.error]||json.error); grecaptcha.reset(v2WidgetId); }
-              else { alert(MSG.ok); form.reset(); toggleSubmit(); grecaptcha.reset(v2WidgetId); }
-            })
-            .catch(() => { alert('Error al enviar, intentá luego'); grecaptcha.reset(v2WidgetId); });
-        });
-    });
+    grecaptcha.execute('6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp', { action: 'submit' })
+      .then(token => {
+        v3Token = token;
+        const data = new FormData(form);
+        data.append('tokenV3', v3Token);
+        fetch('/api/register', { method: 'POST', body: data })
+          .then(r => r.json())
+          .then(json => {
+            if (json.needV2) grecaptcha.execute();
+            else if (json.error) {
+              alert(MSG[json.error] || json.error);
+              grecaptcha.reset();
+            } else {
+              alert(MSG.ok);
+              form.reset();
+              toggleSubmit();
+            }
+          })
+          .catch(() => {
+            alert('Error al enviar, intentá luego');
+          });
+      });
   });
 
-  // Callback v2 Invisible
+  // Callback for v2
   function onSubmit(tokenV2) {
     const data = new FormData(form);
     data.append('tokenV3', v3Token);
     data.append('g-recaptcha-response', tokenV2);
-    fetch('/api/register', { method:'POST', body:data })
+    fetch('/api/register', { method: 'POST', body: data })
       .then(r => r.json())
       .then(json => {
-        if (json.error) alert(MSG[json.error]||json.error);
-        else { alert(MSG.ok); form.reset(); }
+        if (json.error) alert(MSG[json.error] || json.error);
+        else alert(MSG.ok);
+        form.reset();
         toggleSubmit();
-        grecaptcha.reset(v2WidgetId);
       })
-      .catch(() => { alert('Error al enviar, intentá luego'); grecaptcha.reset(v2WidgetId); });
+      .catch(() => {
+        alert('Error al enviar, intentá luego');
+      });
   }
   </script>
 </body>
