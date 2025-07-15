@@ -4,31 +4,64 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Formulario de Registro</title>
-  <!-- reCAPTCHA v2 invisible -->
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <style>
     body { font-family: system-ui, sans-serif; margin:0; padding:1rem; }
     form { display:block; max-width:420px; margin:0 auto; }
-    input, textarea, button { display:block; margin-bottom:.35rem; padding:.5rem; font-size:1rem; }
-    small.error-msg { color:crimson; font-size:.8rem; margin:-.25rem 0 .25rem; display:none; }
-    button[disabled] { opacity:.6; cursor:not-allowed; pointer-events:none; }
+    input, textarea, button { display:block; width:100%; margin-bottom:.35rem; padding:.5rem; font-size:1rem; }
+    small.error-msg { color:crimson; font-size:.8rem; margin-top:-.25rem; margin-bottom:.5rem; display:none; }
+    button[disabled] { opacity:.6; cursor:not-allowed; }
   </style>
 </head>
 <body>
   <form id="registro-form" novalidate>
-    <input name="nombre" placeholder="Nombre" required /><small class="error-msg"></small>
-    <input name="apellido" placeholder="Apellido" required /><small class="error-msg"></small>
-    <input name="dni" placeholder="DNI (8 dígitos)" required /><small class="error-msg"></small>
-    <input id="codArea" name="codArea" placeholder="Código de área" required /><small class="error-msg"></small>
-    <input id="numeroTelefono" name="numeroTelefono" placeholder="Número de teléfono" required /><small class="error-msg"></small>
-    <input name="email" placeholder="Email" required /><small class="error-msg"></small>
-    <input name="direccion" placeholder="Dirección" required /><small class="error-msg"></small>
-    <textarea name="comentarios" placeholder="Comentarios (opcional)"></textarea><small class="error-msg"></small>
+    <label>
+      Nombre* 
+      <input name="nombre" placeholder="Nombre" />
+      <small class="error-msg">Requerido</small>
+    </label>
+    <label>
+      Apellido*
+      <input name="apellido" placeholder="Apellido" />
+      <small class="error-msg">Requerido</small>
+    </label>
+    <label>
+      DNI (8 dígitos)*
+      <input name="dni" placeholder="DNI" />
+      <small class="error-msg">Requerido</small>
+    </label>
+    <label>
+      Código de área*
+      <input id="codArea" name="codArea" placeholder="Código de área" />
+      <small class="error-msg">Requerido</small>
+    </label>
+    <label>
+      Número de teléfono*
+      <input id="numeroTelefono" name="numeroTelefono" placeholder="Número de teléfono" />
+      <small class="error-msg">Requerido</small>
+    </label>
+    <label>
+      Email*
+      <input name="email" placeholder="Email" />
+      <small class="error-msg">Requerido</small>
+    </label>
+    <label>
+      Dirección*
+      <input name="direccion" placeholder="Dirección" />
+      <small class="error-msg">Requerido</small>
+    </label>
+    <label>
+      Comentarios (opcional)
+      <textarea name="comentarios" placeholder="Comentarios"></textarea>
+      <small class="error-msg"></small>
+    </label>
+
     <!-- Honeypots -->
     <input name="zona" tabindex="-1" style="display:none" />
     <input name="estado" tabindex="-1" style="display:none" />
     <!-- Campo oculto lista -->
     <input id="lista" name="lista" type="hidden" />
+
     <button
       class="g-recaptcha"
       data-sitekey="6LdNAXUrAAAAAIz5Vi5nLnkSHF-fjoTXPSKa2x6y"
@@ -53,77 +86,70 @@
     };
     const form = document.getElementById('registro-form');
     const submitBtn = form.querySelector('button.g-recaptcha');
-    const touched = new Set();
 
-    // Rellena lista desde ?l=
+    // rellena lista
     document.getElementById('lista').value =
       new URLSearchParams(location.search).get('l') || '';
 
     function showError(input, msg) {
-      const span = input.nextElementSibling;
-      span.textContent = msg;
-      span.style.display = msg ? 'block' : 'none';
+      const err = input.parentNode.querySelector('small.error-msg');
+      err.textContent = msg;
+      err.style.display = msg ? 'block' : 'none';
     }
 
-    // onSubmitCheck = true => tratar campo vacío como error
-    function validateField(input, onSubmitCheck) {
+    function validateField(input, treatEmptyAsError) {
       const key = input.name || input.id;
       const val = input.value.trim();
       const required = key !== 'comentarios';
-
-      // vacío
+      // empty
       if (val === '') {
-        if (onSubmitCheck && required) {
+        if (required && treatEmptyAsError) {
           showError(input, 'Requerido');
           return false;
         }
         showError(input, '');
         return !required;
       }
-
-      // patrón
+      // pattern
       if (patterns[key] && !patterns[key].test(val)) {
         showError(input, 'Valor inválido');
         return false;
       }
-
       showError(input, '');
       return true;
     }
 
     function toggleSubmit() {
-      // enable only if all required are non-empty and match pattern
-      const allValid = [...form.querySelectorAll('input, textarea')]
+      const ok = [...form.querySelectorAll('input, textarea')]
         .filter(el => el.type !== 'hidden')
         .every(el => validateField(el, true));
-      submitBtn.disabled = !allValid;
+      submitBtn.disabled = !ok;
     }
 
-    // blur/input: validate lightly (no empty error)
+    // on blur: show required/error; on input: clear/show as appropriate
     form.querySelectorAll('input, textarea').forEach(el => {
       if (el.type === 'hidden') return;
       el.addEventListener('blur', () => {
-        touched.add(el);
-        validateField(el, false);
+        validateField(el, true);
         toggleSubmit();
       });
       el.addEventListener('input', () => {
-        if (touched.has(el)) validateField(el, false);
+        validateField(el, false);
         toggleSubmit();
       });
     });
 
-    window.addEventListener('load', () => { toggleSubmit(); });
+    window.addEventListener('load', toggleSubmit);
 
     form.addEventListener('submit', e => {
       e.preventDefault();
-      // final check and fire captcha
-      let ok = true;
+      // final check
+      let valid = true;
       form.querySelectorAll('input, textarea').forEach(el => {
         if (el.type === 'hidden') return;
-        if (!validateField(el, true)) ok = false;
+        if (!validateField(el, true)) valid = false;
       });
-      if (!ok) return;
+      if (!valid) return;
       grecaptcha.execute();
     });
 
@@ -141,13 +167,13 @@
 
     async function onSubmit(token) {
       const data = {};
-      new FormData(form).forEach((v, k) => data[k] = v.trim());
+      new FormData(form).forEach((v,k) => data[k] = v.trim());
       data['g-recaptcha-response'] = token;
 
       const resp = await fetch('/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(data)
       });
       const d = await resp.json();
 
@@ -156,11 +182,9 @@
         grecaptcha.reset();
         return;
       }
-
       alert(MSG.ok);
       form.reset();
       grecaptcha.reset();
-      touched.clear();
       toggleSubmit();
     }
   </script>
