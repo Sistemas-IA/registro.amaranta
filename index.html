@@ -63,19 +63,14 @@
         const text = await res.text();
         let data;
         try { data = JSON.parse(text); }
-        catch {
-          console.error('Respuesta no JSON:', text);
-          alert('Error inesperado del servidor');
-          return;
-        }
+        catch { alert('Error inesperado del servidor'); return; }
         if (res.ok && data.ok) {
           alert('Registro exitoso 🎉');
           form.reset();
         } else {
           alert('Error: ' + (data.error || 'Algo salió mal'));
         }
-      } catch (err) {
-        console.error('Fetch error:', err);
+      } catch {
         alert('No se pudo conectar con el servidor');
       }
     });
