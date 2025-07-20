@@ -1,12 +1,5 @@
 {
   "version": 2,
-  "routes": [
-    {
-      "src": "/api/register",
-      "methods": ["POST"],
-      "dest": "/api/register.js"
-    }
-  ],
   "headers": [
     {
       "source": "/(.*)",
