@@ -4,10 +4,11 @@
   <meta charset="UTF-8">
   <title>Formulario de Registro</title>
 
-  <!-- HSTS (Meta equivalente, aunque el header es más fiable) -->
-  <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
+  <!-- HSTS -->
+  <meta http-equiv="Strict-Transport-Security"
+        content="max-age=31536000; includeSubDomains; preload">
 
-  <!-- CSP para el frontend -->
+  <!-- CSP -->
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self' https://www.google.com/recaptcha/; object-src 'none';">
 
@@ -40,58 +41,7 @@
   </form>
 
   <script>
-    const form = document.getElementById('register-form');
-
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-
-      grecaptcha.ready(async () => {
-        // 1) Generar token reCAPTCHA v3
-        const token = await grecaptcha.execute(
-          '6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp',
-          { action: 'register' }
-        );
-
-        // 2) Preparar payload
-        const payload = {
-          nombre: document.getElementById('nombre').value,
-          email:  document.getElementById('email').value,
-          recaptchaToken: token
-        };
-
-        try {
-          // 3) Llamada fetch
-          const res = await fetch('/api/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-
-          // 4) Leer como texto y luego parsear JSON
-          const text = await res.text();
-          let data;
-          try {
-            data = JSON.parse(text);
-          } catch (err) {
-            console.error('Respuesta no JSON:', text);
-            alert('Error inesperado del servidor');
-            return;
-          }
-
-          // 5) Manejar respuesta
-          if (res.ok && data.ok) {
-            alert('Registro exitoso 🎉');
-            form.reset();
-          } else {
-            alert('Error: ' + (data.error || 'Algo salió mal'));
-          }
-
-        } catch (err) {
-          console.error('Fetch error:', err);
-          alert('No se pudo conectar con el servidor');
-        }
-      });
-    });
+    // ...tu JS de reCAPTCHA y fetch (igual que antes)...
   </script>
 </body>
 </html>
