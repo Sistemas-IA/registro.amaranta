@@ -10,8 +10,15 @@ import {
 } from '../config/constants';
 
 export default async function handler(req, res) {
+  // ─── SECURITY HEADERS ─────────────────────────────────────────
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  res.setHeader('Content-Security-Policy', "default-src 'none';");
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+
   try {
-    // ─── Rate-limit por IP ─────────────────────────────────
+    // ─── Rate-limit por IP ──────────────────────────────────────
     const ip =
       req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
       req.socket.remoteAddress;
@@ -24,7 +31,7 @@ export default async function handler(req, res) {
     }
     await kv.set(key, count + 1, { ex: RATE_LIMIT_WINDOW });
 
-    // ─── Solo POST ──────────────────────────────────────────
+    // ─── Solo POST ───────────────────────────────────────────────
     if (req.method !== 'POST') {
       return res
         .status(405)
@@ -33,7 +40,7 @@ export default async function handler(req, res) {
 
     const { nombre, email, recaptchaToken } = req.body;
 
-    // ─── reCAPTCHA v3 ───────────────────────────────────────
+    // ─── reCAPTCHA v3 ────────────────────────────────────────────
     if (!recaptchaToken) {
       return res.status(400).json({ error: 'Falta token de reCAPTCHA' });
     }
@@ -56,7 +63,7 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'reCAPTCHA verification failed' });
     }
 
-    // ─── Validaciones de datos ──────────────────────────────
+    // ─── Validaciones de datos ───────────────────────────────────
     if (!isValidEmail(email)) {
       return res.status(400).json({ error: 'Email inválido' });
     }
@@ -66,13 +73,13 @@ export default async function handler(req, res) {
         .json({ error: 'Nombre inválido o demasiado largo' });
     }
 
-    // ─── Sanitización ───────────────────────────────────────
+    // ─── Sanitización ────────────────────────────────────────────
     const data = {
       nombre: sanitize(nombre),
       email: sanitize(email)
     };
 
-    // ─── Escritura en Google Sheets ─────────────────────────
+    // ─── Escritura en Google Sheets ─────────────────────────────
     await writeRow(data);
     return res.status(200).json({ ok: true });
   } catch (err) {
