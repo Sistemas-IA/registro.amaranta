@@ -11,7 +11,7 @@ import {
 
 export default async function handler(req, res) {
   try {
-    // ─── RATE‑LIMIT por IP ───────────────────────────────────
+    // ─── Rate-limit por IP ─────────────────────────────────
     const ip =
       req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
       req.socket.remoteAddress;
@@ -24,9 +24,8 @@ export default async function handler(req, res) {
     }
     await kv.set(key, count + 1, { ex: RATE_LIMIT_WINDOW });
 
-    // ─── SOLO POST ────────────────────────────────────────────
+    // ─── Solo POST ──────────────────────────────────────────
     if (req.method !== 'POST') {
-      res.setHeader('Allow', ['POST']);
       return res
         .status(405)
         .json({ error: `Method ${req.method} Not Allowed` });
@@ -34,7 +33,7 @@ export default async function handler(req, res) {
 
     const { nombre, email, recaptchaToken } = req.body;
 
-    // ─── reCAPTCHA v3 ────────────────────────────────────────
+    // ─── reCAPTCHA v3 ───────────────────────────────────────
     if (!recaptchaToken) {
       return res.status(400).json({ error: 'Falta token de reCAPTCHA' });
     }
@@ -49,18 +48,15 @@ export default async function handler(req, res) {
       }
     );
     const recJson = await recRes.json();
-    console.log('>> reCAPTCHA result:', recJson);
     if (
       !recJson.success ||
       recJson.action !== 'register' ||
       recJson.score < 0.5
     ) {
-      return res
-        .status(403)
-        .json({ error: 'reCAPTCHA verification failed' });
+      return res.status(403).json({ error: 'reCAPTCHA verification failed' });
     }
 
-    // ─── VALIDACIONES ────────────────────────────────────────
+    // ─── Validaciones de datos ──────────────────────────────
     if (!isValidEmail(email)) {
       return res.status(400).json({ error: 'Email inválido' });
     }
@@ -70,20 +66,17 @@ export default async function handler(req, res) {
         .json({ error: 'Nombre inválido o demasiado largo' });
     }
 
-    // ─── SANITIZACIÓN ────────────────────────────────────────
+    // ─── Sanitización ───────────────────────────────────────
     const data = {
       nombre: sanitize(nombre),
       email: sanitize(email)
     };
 
-    // ─── ESCRITURA EN SHEETS ─────────────────────────────────
+    // ─── Escritura en Google Sheets ─────────────────────────
     await writeRow(data);
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error('Unhandled error:', err);
-    // Para depurar, devolvemos el mensaje real del error
-    return res
-      .status(500)
-      .json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 }
