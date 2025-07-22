@@ -22,50 +22,52 @@
   </form>
 
   <script>
-    // Obtengo el <form> y el contenedor de errores
+    // Referencias al form y al contenedor de errores
     const form = document.getElementById('register-form');
     const errorContainer = document.getElementById('error-container');
 
     form.addEventListener('submit', async e => {
-      e.preventDefault();           // deja de hacer GET y ensuciar la URL
+      // Evitar comportamiento por defecto y que la URL se ensucie
+      e.preventDefault();
       errorContainer.style.display = 'none';
-      errorContainer.innerHTML = '';
+      errorContainer.textContent = '';
 
+      // Recoger valores
       const nombre = document.getElementById('nombre').value.trim();
       const email  = document.getElementById('email').value.trim();
 
-      // Validaciones mínimas front: no permito vacíos
+      // Validación mínima en frontend
       if (!nombre || !email) {
-        errorContainer.textContent = 'Nombre y Email son obligatorios.';
+        errorContainer.textContent = 'Nombre y email son obligatorios.';
         errorContainer.style.display = 'block';
         return;
       }
 
-      // reCAPTCHA v3
       try {
+        // Generar token reCAPTCHA
         await grecaptcha.ready();
         const token = await grecaptcha.execute(
           '6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp',
           { action: 'register' }
         );
 
-        // llamada AJAX
-        const res = await fetch('/api/register', {
+        // Petición a la API
+        const response = await fetch('/api/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ nombre, email, recaptchaToken: token })
         });
 
-        const json = await res.json();
-        if (res.ok && json.ok) {
+        const result = await response.json();
+        if (response.ok && result.ok) {
           alert('Registro exitoso 🎉');
           form.reset();
         } else {
-          alert('Error: ' + (json.error || 'Algo salió mal'));
+          alert('Error: ' + (result.error || 'Algo salió mal'));
         }
       } catch (err) {
-        console.error(err);
-        alert('Error de conexión o de reCAPTCHA');
+        console.error('Error al enviar:', err);
+        alert('No se pudo conectar con el servidor o reCAPTCHA falló.');
       }
     });
   </script>
