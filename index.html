@@ -31,7 +31,8 @@
     const errorContainer = document.getElementById('error-container');
     const submitBtn = document.getElementById('submit-btn');
 
-    submitBtn.addEventListener('click', async () => {
+    submitBtn.addEventListener('click', () => {
+      // Limpiar errores
       errorContainer.style.display = 'none';
       errorContainer.textContent = '';
 
@@ -45,18 +46,32 @@
         return;
       }
 
-      try {
-        await grecaptcha.ready();
-        const token = await grecaptcha.execute(
+      // Lógica reCAPTCHA + fetch encadenada
+      grecaptcha.ready(() => {
+        grecaptcha.execute(
           '6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp',
           { action: 'register' }
-        );
-
-        const res = await fetch('/api/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre, email, recaptchaToken: token })
-        });
+        ).then(token => {
+          return fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre, email, recaptchaToken: token })
+          });
+        }).then(res => res.json().then(json => ({ status: res.status, json })))
+          .then(({ status, json }) => {
+            if (status === 200 && json.ok) {
+              alert('Registro exitoso 🎉');
+              form.reset();
+            } else {
+              alert('Error: ' + (json.error || 'Algo salió mal'));
+            }
+          })
+          .catch(err => {
+            console.error('Error al enviar:', err);
+            alert('No se pudo conectar con el servidor o reCAPTCHA falló.');
+          });
+      });
+    });
 
         const result = await res.json();
         if (res.ok && result.ok) {
