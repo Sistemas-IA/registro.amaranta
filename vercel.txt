@@ -1,5 +1,0 @@
-{
-  "routes": [
-    { "src": "/api/register", "methods": ["POST"], "dest": "/api/register.js" }
-  ]
-}
