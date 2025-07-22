@@ -17,10 +17,11 @@
 
   <!-- reCAPTCHA v3 -->
   <script src="https://www.google.com/recaptcha/api.js?render=6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp"></script>
+
   <style>
     .error-message { color: #c00; margin: 0.5em 0; }
     #error-container { display: none; margin-bottom: 1em; }
-    form div.field { margin-bottom: 0.5em; }
+    form .field { margin-bottom: 0.5em; }
     form label { display: block; }
   </style>
 </head>
@@ -31,32 +32,32 @@
 
     <div class="field">
       <label>Nombre:<br>
-        <input type="text" id="nombre" name="nombre" maxlength="30" />
+        <input type="text" id="nombre" name="nombre" maxlength="30">
       </label>
     </div>
     <div class="field">
       <label>Apellido:<br>
-        <input type="text" id="apellido" name="apellido" maxlength="30" />
+        <input type="text" id="apellido" name="apellido" maxlength="30">
       </label>
     </div>
     <div class="field">
       <label>DNI:<br>
-        <input type="text" id="dni" name="dni" maxlength="8" />
+        <input type="text" id="dni" name="dni" maxlength="8">
       </label>
     </div>
     <div class="field">
       <label>Teléfono:<br>
-        <input type="text" id="telefono" name="telefono" maxlength="13" />
+        <input type="text" id="telefono" name="telefono" maxlength="13">
       </label>
     </div>
     <div class="field">
       <label>Email:<br>
-        <input type="email" id="email" name="email" />
+        <input type="email" id="email" name="email">
       </label>
     </div>
     <div class="field">
       <label>Dirección:<br>
-        <input type="text" id="direccion" name="direccion" maxlength="100" />
+        <input type="text" id="direccion" name="direccion" maxlength="100">
       </label>
     </div>
     <div class="field">
@@ -66,20 +67,20 @@
     </div>
 
     <!-- Honeypots y campos ocultos -->
-    <input type="hidden" id="zona" name="zona" value="" />
-    <input type="hidden" id="estado" name="estado" value="Pendiente" />
-    <input type="hidden" id="lista" name="lista" value="" />
+    <input type="hidden" id="zona" name="zona" value="">
+    <input type="hidden" id="estado" name="estado" value="Pendiente">
+    <input type="hidden" id="lista" name="lista" value="">
 
     <button type="submit">Enviar</button>
   </form>
 
   <script>
-    // Extrae parámetro ?l= de la URL
+    // Extraer ?l= lista
     const params = new URLSearchParams(window.location.search);
     const listaParam = params.get('l');
     if (listaParam) document.getElementById('lista').value = listaParam;
 
-    // Mensajes de error configurables
+    // Mensajes de error
     const ERRORS = {
       required:       'Este campo es obligatorio.',
       maxLength:      max => `Máximo ${max} caracteres permitidos.`, 
@@ -96,7 +97,7 @@
       dni:    /^\d{8}$/, 
       phone:  /^\d{9,13}$/, 
       email:  /^[^@\s]+@[^@\s]+\.[^@\s]+$/, 
-      lista:  /^[1-9][0-9]?$/"
+      lista:  /^[1-9][0-9]?$/
     };
 
     function validateForm(data) {
@@ -158,7 +159,25 @@
           { action: 'register' }
         );
         data.recaptchaToken = token;
-        // Lógica de fetch a la API...
+        // 3) Llamada fetch
+        const res = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const text = await res.text();
+        let result;
+        try { result = JSON.parse(text); }
+        catch {
+          alert('Error inesperado del servidor');
+          return;
+        }
+        if (res.ok && result.ok) {
+          alert('Registro exitoso 🎉');
+          form.reset();
+        } else {
+          alert('Error: ' + (result.error || 'Algo salió mal'));
+        }
       });
     });
   </script>
