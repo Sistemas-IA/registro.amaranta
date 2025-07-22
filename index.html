@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Formulario de Registro</title>
+
+  <!-- reCAPTCHA v3 -->
+  <script src="https://www.google.com/recaptcha/api.js?render=6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp"></script>
+</head>
+<body>
+  <h1>Formulario de Registro</h1>
+  <form id="register-form">
+    <div id="error-container" style="display:none;color:#c00;margin-bottom:1em;"></div>
+
+    <label for="nombre">Nombre:</label><br>
+    <input type="text" id="nombre" name="nombre" maxlength="50"><br><br>
+
+    <label for="email">Email:</label><br>
+    <input type="email" id="email" name="email"><br><br>
+
+    <button type="submit">Enviar</button>
+  </form>
+
+  <script>
+    // Obtengo el <form> y el contenedor de errores
+    const form = document.getElementById('register-form');
+    const errorContainer = document.getElementById('error-container');
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();           // deja de hacer GET y ensuciar la URL
+      errorContainer.style.display = 'none';
+      errorContainer.innerHTML = '';
+
+      const nombre = document.getElementById('nombre').value.trim();
+      const email  = document.getElementById('email').value.trim();
+
+      // Validaciones mínimas front: no permito vacíos
+      if (!nombre || !email) {
+        errorContainer.textContent = 'Nombre y Email son obligatorios.';
+        errorContainer.style.display = 'block';
+        return;
+      }
+
+      // reCAPTCHA v3
+      try {
+        await grecaptcha.ready();
+        const token = await grecaptcha.execute(
+          '6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp',
+          { action: 'register' }
+        );
+
+        // llamada AJAX
+        const res = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre, email, recaptchaToken: token })
+        });
+
+        const json = await res.json();
+        if (res.ok && json.ok) {
+          alert('Registro exitoso 🎉');
+          form.reset();
+        } else {
+          alert('Error: ' + (json.error || 'Algo salió mal'));
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error de conexión o de reCAPTCHA');
+      }
+    });
+  </script>
+</body>
+</html>
