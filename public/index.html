@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Formulario de Registro</title>
+  <!-- reCAPTCHA v3 -->
+  <script src="https://www.google.com/recaptcha/api.js?render=6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp"></script>
+</head>
+<body>
+  <h1>Formulario de Registro</h1>
+  <form id="register-form">
+    <label>
+      Nombre:
+      <input type="text" id="nombre" name="nombre" required maxlength="50" />
+    </label>
+    <br/>
+    <label>
+      Email:
+      <input type="email" id="email" name="email" required />
+    </label>
+    <br/>
+    <button type="submit">Enviar</button>
+  </form>
+
+  <script>
+    const form = document.getElementById('register-form');
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      grecaptcha.ready(async () => {
+        // 1) Generar token reCAPTCHA v3
+        const token = await grecaptcha.execute(
+          '6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp',
+          { action: 'register' }
+        );
+
+        // 2) Preparar payload
+        const payload = {
+          nombre: document.getElementById('nombre').value,
+          email:  document.getElementById('email').value,
+          recaptchaToken: token
+        };
+
+        try {
+          // 3) Llamada fetch
+          const res = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          // 4) Leer como texto y luego parsear JSON
+          const text = await res.text();
+          let data;
+          try {
+            data = JSON.parse(text);
+          } catch (err) {
+            console.error('Respuesta no JSON:', text);
+            alert('Error inesperado del servidor');
+            return;
+          }
+
+          // 5) Manejar respuesta
+          if (res.ok && data.ok) {
+            alert('Registro exitoso 🎉');
+            form.reset();
+          } else {
+            alert('Error: ' + (data.error || 'Algo salió mal'));
+          }
+
+        } catch (err) {
+          console.error('Fetch error:', err);
+          alert('No se pudo conectar con el servidor');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
