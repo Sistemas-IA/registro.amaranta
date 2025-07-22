@@ -25,38 +25,53 @@
   <script>
     const form = document.getElementById('register-form');
 
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', (e) => {
       e.preventDefault();
 
-      // 1) Generar token reCAPTCHA v3 para la acción "register"
       grecaptcha.ready(async () => {
+        // 1) Generar token reCAPTCHA v3
         const token = await grecaptcha.execute(
           '6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp',
           { action: 'register' }
         );
 
-        // 2) Preparar payload con campos y token
+        // 2) Preparar payload
         const payload = {
           nombre: document.getElementById('nombre').value,
           email:  document.getElementById('email').value,
           recaptchaToken: token
         };
 
-        // 3) Enviar al API
-        const res = await fetch('/api/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+        try {
+          // 3) Llamada fetch
+          const res = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
 
-        const data = await res.json();
+          // 4) Leer como texto y luego parsear JSON
+          const text = await res.text();
+          let data;
+          try {
+            data = JSON.parse(text);
+          } catch (err) {
+            console.error('Respuesta no JSON:', text);
+            alert('Error inesperado del servidor');
+            return;
+          }
 
-        // 4) Mostrar feedback
-        if (res.ok && data.ok) {
-          alert('Registro exitoso 🎉');
-          form.reset();
-        } else {
-          alert('Error: ' + (data.error || 'Algo salió mal'));
+          // 5) Manejar respuesta
+          if (res.ok && data.ok) {
+            alert('Registro exitoso 🎉');
+            form.reset();
+          } else {
+            alert('Error: ' + (data.error || 'Algo salió mal'));
+          }
+
+        } catch (err) {
+          console.error('Fetch error:', err);
+          alert('No se pudo conectar con el servidor');
         }
       });
     });
