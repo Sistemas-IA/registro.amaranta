@@ -3,87 +3,71 @@
 <head>
   <meta charset="UTF-8">
   <title>Formulario de Registro</title>
-
   <!-- reCAPTCHA v3 -->
   <script src="https://www.google.com/recaptcha/api.js?render=6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp"></script>
+  <style>
+    .error-message { color: #c00; margin: 0.5em 0; }
+    #error-container { display: none; color: #c00; margin-bottom: 1em; }
+    form input { display: block; margin: 0.5em 0; padding: 0.5em; width: 200px; }
+    form button { padding: 0.5em 1em; }
+  </style>
 </head>
 <body>
   <h1>Formulario de Registro</h1>
+  <div id="error-container"></div>
   <form id="register-form" novalidate>
-    <div id="error-container" style="display:none;color:#c00;margin-bottom:1em;"></div>
-
-    <div>
-      <label for="nombre">Nombre:</label><br>
-      <input type="text" id="nombre" name="nombre" maxlength="50">
-    </div><br>
-
-    <div>
-      <label for="email">Email:</label><br>
-      <input type="email" id="email" name="email">
-    </div><br>
-
-    <!-- Botón tipo button evita submit nativo -->
-    <button type="button" id="submit-btn">Enviar</button>
+    <input type="text" id="nombre" name="nombre" maxlength="50" placeholder="Nombre" />
+    <input type="email" id="email" name="email" placeholder="Email" />
+    <button type="submit">Enviar</button>
   </form>
 
   <script>
-    const form = document.getElementById('register-form');
-    const errorContainer = document.getElementById('error-container');
-    const submitBtn = document.getElementById('submit-btn');
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('register-form');
+      const errorContainer = document.getElementById('error-container');
 
-    submitBtn.addEventListener('click', () => {
-      // Limpiar errores
-      errorContainer.style.display = 'none';
-      errorContainer.textContent = '';
+      form.addEventListener('submit', async e => {
+        e.preventDefault();
+        errorContainer.style.display = 'none';
+        errorContainer.textContent = '';
 
-      const nombre = document.getElementById('nombre').value.trim();
-      const email = document.getElementById('email').value.trim();
+        const nombre = form.nombre.value.trim();
+        const email = form.email.value.trim();
 
-      // Validación mínima
-      if (!nombre || !email) {
-        errorContainer.textContent = 'Nombre y email son obligatorios.';
-        errorContainer.style.display = 'block';
-        return;
-      }
+        // Validación frontend
+        if (!nombre || !email) {
+          errorContainer.textContent = 'Nombre y email son obligatorios.';
+          errorContainer.style.display = 'block';
+          return;
+        }
 
-      // Lógica reCAPTCHA + fetch encadenada
-      grecaptcha.ready(() => {
-        grecaptcha.execute(
-          '6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp',
-          { action: 'register' }
-        ).then(token => {
-          return fetch('/api/register', {
+        try {
+          // Obtener token reCAPTCHA
+          await grecaptcha.ready();
+          const token = await grecaptcha.execute(
+            '6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp',
+            { action: 'register' }
+          );
+
+          // Llamada AJAX
+          const response = await fetch('/api/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nombre, email, recaptchaToken: token })
           });
-        }).then(res => res.json().then(json => ({ status: res.status, json })))
-          .then(({ status, json }) => {
-            if (status === 200 && json.ok) {
-              alert('Registro exitoso 🎉');
-              form.reset();
-            } else {
-              alert('Error: ' + (json.error || 'Algo salió mal'));
-            }
-          })
-          .catch(err => {
-            console.error('Error al enviar:', err);
-            alert('No se pudo conectar con el servidor o reCAPTCHA falló.');
-          });
-      });
-    });
+          const result = await response.json();
 
-        const result = await res.json();
-        if (res.ok && result.ok) {
-          alert('Registro exitoso 🎉');
-          form.reset();
-        } else {
-          alert('Error: ' + (result.error || 'Algo salió mal'));
+          if (response.ok && result.ok) {
+            alert('Registro exitoso 🎉');
+            form.reset();
+          } else {
+            alert('Error: ' + (result.error || 'Algo salió mal'));
+          }
+        } catch (err) {
+          console.error('Error al enviar:', err);
+          alert('No se pudo conectar con el servidor o reCAPTCHA falló.');
         }
-      } catch (err) {
-        console.error('Error al enviar:', err);
-        alert('No se pudo conectar con el servidor o reCAPTCHA falló.');
-      }
+      });
     });
   </script>
 </body>
