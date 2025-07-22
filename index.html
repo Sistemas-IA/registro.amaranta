@@ -9,34 +9,36 @@
 </head>
 <body>
   <h1>Formulario de Registro</h1>
-  <form id="register-form">
+  <form id="register-form" novalidate>
     <div id="error-container" style="display:none;color:#c00;margin-bottom:1em;"></div>
 
-    <label for="nombre">Nombre:</label><br>
-    <input type="text" id="nombre" name="nombre" maxlength="50"><br><br>
+    <div>
+      <label for="nombre">Nombre:</label><br>
+      <input type="text" id="nombre" name="nombre" maxlength="50">
+    </div><br>
 
-    <label for="email">Email:</label><br>
-    <input type="email" id="email" name="email"><br><br>
+    <div>
+      <label for="email">Email:</label><br>
+      <input type="email" id="email" name="email">
+    </div><br>
 
-    <button type="submit">Enviar</button>
+    <!-- Botón tipo button evita submit nativo -->
+    <button type="button" id="submit-btn">Enviar</button>
   </form>
 
   <script>
-    // Referencias al form y al contenedor de errores
     const form = document.getElementById('register-form');
     const errorContainer = document.getElementById('error-container');
+    const submitBtn = document.getElementById('submit-btn');
 
-    form.addEventListener('submit', async e => {
-      // Evitar comportamiento por defecto y que la URL se ensucie
-      e.preventDefault();
+    submitBtn.addEventListener('click', async () => {
       errorContainer.style.display = 'none';
       errorContainer.textContent = '';
 
-      // Recoger valores
       const nombre = document.getElementById('nombre').value.trim();
-      const email  = document.getElementById('email').value.trim();
+      const email = document.getElementById('email').value.trim();
 
-      // Validación mínima en frontend
+      // Validación mínima
       if (!nombre || !email) {
         errorContainer.textContent = 'Nombre y email son obligatorios.';
         errorContainer.style.display = 'block';
@@ -44,22 +46,20 @@
       }
 
       try {
-        // Generar token reCAPTCHA
         await grecaptcha.ready();
         const token = await grecaptcha.execute(
           '6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp',
           { action: 'register' }
         );
 
-        // Petición a la API
-        const response = await fetch('/api/register', {
+        const res = await fetch('/api/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ nombre, email, recaptchaToken: token })
         });
 
-        const result = await response.json();
-        if (response.ok && result.ok) {
+        const result = await res.json();
+        if (res.ok && result.ok) {
           alert('Registro exitoso 🎉');
           form.reset();
         } else {
