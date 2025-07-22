@@ -1,1 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Formulario de Registro</title>
 
+  <!-- HSTS -->
+  <meta http-equiv="Strict-Transport-Security"
+        content="max-age=31536000; includeSubDomains; preload">
+
+  <!-- CSP -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' https://www.google.com/recaptcha/; object-src 'none';">
+
+  <!-- X-Frame-Options -->
+  <meta http-equiv="X-Frame-Options" content="DENY">
+
+  <!-- X-Content-Type-Options -->
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+
+  <!-- Referrer-Policy -->
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
+  <!-- reCAPTCHA v3 -->
+  <script src="https://www.google.com/recaptcha/api.js?render=6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp"></script>
+</head>
+<body>
+  <h1>Formulario de Registro</h1>
+  <form id="register-form">
+    <label>
+      Nombre:
+      <input type="text" id="nombre" name="nombre" required maxlength="50" />
+    </label>
+    <br/>
+    <label>
+      Email:
+      <input type="email" id="email" name="email" required />
+    </label>
+    <br/>
+    <button type="submit">Enviar</button>
+  </form>
+
+  <script>
+    const form = document.getElementById('register-form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await grecaptcha.ready();
+      const token = await grecaptcha.execute(
+        '6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp',
+        { action: 'register' }
+      );
+      const payload = {
+        nombre: document.getElementById('nombre').value,
+        email:  document.getElementById('email').value,
+        recaptchaToken: token
+      };
+      try {
+        const res = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); }
+        catch { alert('Error inesperado del servidor'); return; }
+        if (res.ok && data.ok) {
+          alert('Registro exitoso 🎉');
+          form.reset();
+        } else {
+          alert('Error: ' + (data.error || 'Algo salió mal'));
+        }
+      } catch {
+        alert('No se pudo conectar con el servidor');
+      }
+    });
+  </script>
+</body>
+</html>
