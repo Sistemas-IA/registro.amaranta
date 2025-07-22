@@ -81,9 +81,9 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error('Unhandled error:', err);
-    // Siempre devolvemos JSON, nunca HTML
+    // Para depurar, devolvemos el mensaje real del error
     return res
       .status(500)
-      .json({ error: 'Error interno del servidor' });
+      .json({ error: err.message });
   }
 }
