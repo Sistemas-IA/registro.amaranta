@@ -1,1 +1,31 @@
+<!doctype html><html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Autorregistro</title>
+<link rel="stylesheet" href="https://unpkg.com/modern-normalize/modern-normalize.css">
+<style>
+body{font-family:sans-serif;max-width:480px;margin:2rem auto;padding:1rem}
+label{display:block;margin:.6rem 0}input,textarea{width:100%;padding:.5rem}
+button{margin-top:1rem;padding:.6rem 1.4rem}
+.honey{display:none !important}
+</style>
+<script src="https://www.google.com/recaptcha/api.js?render=6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp"></script>
+</head><body>
+<h1>Formulario de registro</h1>
+<form id="f" novalidate>
+  <label>Nombre        <input name="nombre"   required maxlength="60"></label>
+  <label>Apellido      <input name="apellido" required maxlength="60"></label>
+  <label>DNI           <input name="dni"      required pattern="\\d{8}"></label>
+  <label>Código Área   <input name="codigo"   required pattern="\\d{2,4}"></label>
+  <label>Nº Celular    <input name="numero"   required pattern="\\d{7,9}"></label>
+  <label>Email         <input name="email"    required type="email"></label>
+  <label>Dirección     <input name="direccion" required maxlength="120"></label>
+  <label>Comentarios   <textarea name="comentarios" maxlength="300"></textarea></label>
 
+  <!-- honeypots -->
+  <input class="honey" name="zona">
+  <input class="honey" name="estado">
+
+  <button type="submit">Enviar</button>
+</form>
+<script src="script.js"></script>
+</body></html>
