@@ -1,30 +1,32 @@
-// services/sheetsService.js
-import { SHEETS_WEBAPP_URL } from '../config/constants';
+import { google } from 'googleapis';
 
-export async function writeRow(data) {
-  // 1) Mostrar la URL que estamos usando
-  console.log('>> writeRow – URL:', SHEETS_WEBAPP_URL);
-  if (!SHEETS_WEBAPP_URL) {
-    throw new Error('SHEETS_WEBAPP_URL no está definido');
-  }
+const creds = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
+const sheets = google.sheets({
+  version: 'v4',
+  auth: new google.auth.JWT(
+    creds.client_email,
+    null,
+    creds.private_key,
+    ['https://www.googleapis.com/auth/spreadsheets']
+  )
+});
 
-  // 2) Hacer el fetch al Web App de GAS
-  const res = await fetch(SHEETS_WEBAPP_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
+export async function getExistingKeys() {
+  // Columnas B (DNI), C (Tel), D (Email) – A=Timestamp
+  const { data } = await sheets.spreadsheets.values.get({
+    spreadsheetId: process.env.SPREADSHEET_ID,
+    range: `${process.env.SHEET_NAME}!B:D`,
+    majorDimension: 'COLUMNS'
   });
+  const [dnis = [], tels = [], emails = []] = data.values || [];
+  return { dnis: new Set(dnis), tels: new Set(tels), emails: new Set(emails) };
+}
 
-  // 3) Loguear status y texto crudo de la respuesta
-  console.log('>> writeRow – status:', res.status, res.statusText);
-  const text = await res.text();
-  console.log('>> writeRow – respuesta raw:', text);
-
-  // 4) Si no es 200, lanzamos error con detalle
-  if (!res.ok) {
-    throw new Error(`Sheets write failed ${res.status}: ${text}`);
-  }
-
-  // 5) Devolver el JSON parseado
-  return JSON.parse(text);
+export async function appendRow(rowArray) {
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: process.env.SPREADSHEET_ID,
+    range: `${process.env.SHEET_NAME}!A:K`,
+    valueInputOption: 'USER_ENTERED',
+    requestBody: { values: [rowArray] }
+  });
 }
