@@ -1,7 +1,11 @@
 {
-  "name": "registro-app",
+  "name": "autorregistro",
   "version": "1.0.0",
+  "type": "module",
+  "engines": { "node": ">=18" },
   "dependencies": {
-    "@vercel/kv": "latest"
+    "@vercel/kv": "latest",
+    "googleapis": "^130.0.0",
+    "nodemailer": "^6.9.10"
   }
 }
