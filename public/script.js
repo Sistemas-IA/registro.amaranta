@@ -1,6 +1,6 @@
 /* global grecaptcha */
 (() => {
-  const SITE_KEY = 'SITE_KEY_AQUI';
+  const SITE_KEY = '6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp';
   const f = document.getElementById('f');
 
   // pre‑carga parámetro l
