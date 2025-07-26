@@ -3,75 +3,68 @@
 <head>
   <meta charset="UTF-8">
   <title>Formulario de Registro</title>
+
   <!-- reCAPTCHA v3 -->
   <script src="https://www.google.com/recaptcha/api.js?render=6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp"></script>
+
+  <style>
+    /* Tus estilos básicos */
+    .error { color: #c00; margin-bottom: 1em; display: none; }
+    input, button { display: block; margin: 0.5em 0; }
+  </style>
 </head>
 <body>
-  <h1>Formulario de Registro</h1>
-  <form id="register-form">
-    <label>
-      Nombre:
-      <input type="text" id="nombre" name="nombre" required maxlength="50" />
-    </label>
-    <br/>
-    <label>
-      Email:
-      <input type="email" id="email" name="email" required />
-    </label>
-    <br/>
+  <h1>Registro de Clientes</h1>
+
+  <div id="error" class="error"></div>
+
+  <form id="register-form" novalidate>
+    <input id="nombre"  name="nombre"  type="text" placeholder="Nombre" maxlength="50">
+    <input id="email"   name="email"   type="email" placeholder="Email">
     <button type="submit">Enviar</button>
   </form>
 
   <script>
-    const form = document.getElementById('register-form');
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('register-form');
+      const error = document.getElementById('error');
 
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
+      form.addEventListener('submit', async e => {
+        e.preventDefault();            // ¡Evita el GET que ensucia la URL!
+        error.style.display = 'none';
+        error.textContent = '';
 
-      grecaptcha.ready(async () => {
-        // 1) Generar token reCAPTCHA v3
-        const token = await grecaptcha.execute(
-          '6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp',
-          { action: 'register' }
-        );
-
-        // 2) Preparar payload
-        const payload = {
-          nombre: document.getElementById('nombre').value,
-          email:  document.getElementById('email').value,
-          recaptchaToken: token
-        };
+        const nombre = form.nombre.value.trim();
+        const email  = form.email.value.trim();
+        if (!nombre || !email) {
+          error.textContent = 'Nombre y email son obligatorios.';
+          error.style.display = 'block';
+          return;
+        }
 
         try {
-          // 3) Llamada fetch
+          await grecaptcha.ready();
+          const token = await grecaptcha.execute(
+            '6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp',
+            { action: 'register' }
+          );
+
           const res = await fetch('/api/register', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            headers: { 'Content-Type':'application/json' },
+            body: JSON.stringify({ nombre, email, recaptchaToken: token })
           });
+          const data = await res.json();
 
-          // 4) Leer como texto y luego parsear JSON
-          const text = await res.text();
-          let data;
-          try {
-            data = JSON.parse(text);
-          } catch (err) {
-            console.error('Respuesta no JSON:', text);
-            alert('Error inesperado del servidor');
-            return;
-          }
-
-          // 5) Manejar respuesta
           if (res.ok && data.ok) {
             alert('Registro exitoso 🎉');
             form.reset();
           } else {
-            alert('Error: ' + (data.error || 'Algo salió mal'));
+            alert('Error: ' + (data.error||'Algo salió mal'));
           }
-
         } catch (err) {
-          console.error('Fetch error:', err);
-          alert('No se pudo conectar con el servidor');
+          console.error(err);
+          alert('No se pudo conectar o reCAPTCHA falló.');
         }
       });
     });
