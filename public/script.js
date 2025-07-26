@@ -1,52 +1,36 @@
-// public/script.js
+/* global grecaptcha */
+(() => {
+  const SITE_KEY = 'SITE_KEY_AQUI';
+  const f = document.getElementById('f');
 
-document.addEventListener('DOMContentLoaded', () => {
-  const form  = document.getElementById('register-form');
-  const error = document.getElementById('error');
-  const btn   = document.getElementById('submit-btn');
+  // pre‑carga parámetro l
+  const url = new URL(location.href);
+  const l = url.searchParams.get('l') || '0';
 
-  btn.addEventListener('click', async () => {
-    // Limpiar errores anteriores
-    error.style.display = 'none';
-    error.textContent   = '';
+  f.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!f.reportValidity()) return;
 
-    const nombre = form.nombre.value.trim();
-    const email  = form.email.value.trim();
+    const btn = f.querySelector('button');
+    btn.disabled = true;
 
-    // Validación mínima
-    if (!nombre || !email) {
-      error.textContent = 'Nombre y email son obligatorios.';
-      error.style.display = 'block';
-      return;
-    }
+    const datos = Object.fromEntries(new FormData(f));
+    datos.l = l;
 
     try {
-      // Esperar a que recaptcha esté listo
-      await grecaptcha.ready();
-      // Generar token
-      const token = await grecaptcha.execute(
-        '6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp',
-        { action: 'register' }
-      );
-
-      // Llamada AJAX a tu API
+      const token = await grecaptcha.execute(SITE_KEY,{action:'submit'});
       const res = await fetch('/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, email, recaptchaToken: token })
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({...datos, recaptchaToken:token})
       });
-
-      const data = await res.json();
-
-      if (res.ok && data.ok) {
-        alert('Registro exitoso 🎉');
-        form.reset();
-      } else {
-        alert('Error: ' + (data.error || 'Algo salió mal'));
-      }
-    } catch (err) {
-      console.error('Error al enviar:', err);
-      alert('No se pudo conectar al servidor o reCAPTCHA falló.');
-    }
+      const j = await res.json();
+      if (!j.ok) throw new Error(j.error);
+      alert('Registro recibido. Revisá tu correo ✔️');
+      f.reset();
+      history.replaceState(null,'',location.pathname);
+    } catch(err){
+      alert(err.message || 'Error de red');
+    } finally{ btn.disabled = false; }
   });
-});
+})();
