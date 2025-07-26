@@ -2,72 +2,28 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Formulario de Registro</title>
+  <title>Registro de Clientes</title>
 
   <!-- reCAPTCHA v3 -->
   <script src="https://www.google.com/recaptcha/api.js?render=6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp"></script>
 
   <style>
-    /* Tus estilos básicos */
     .error { color: #c00; margin-bottom: 1em; display: none; }
-    input, button { display: block; margin: 0.5em 0; }
+    input, button { display: block; margin: 0.5em 0; padding: 0.5em; width: 200px; }
   </style>
 </head>
 <body>
-  <h1>Registro de Clientes</h1>
+  <h1>Formulario de Registro</h1>
 
   <div id="error" class="error"></div>
 
   <form id="register-form" novalidate>
-    <input id="nombre"  name="nombre"  type="text" placeholder="Nombre" maxlength="50">
-    <input id="email"   name="email"   type="email" placeholder="Email">
-    <button type="submit">Enviar</button>
+    <input id="nombre" name="nombre" type="text" placeholder="Nombre" maxlength="50">
+    <input id="email"  name="email"  type="email" placeholder="Email">
+    <button type="button" id="submit-btn">Enviar</button>
   </form>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const form = document.getElementById('register-form');
-      const error = document.getElementById('error');
-
-      form.addEventListener('submit', async e => {
-        e.preventDefault();            // ¡Evita el GET que ensucia la URL!
-        error.style.display = 'none';
-        error.textContent = '';
-
-        const nombre = form.nombre.value.trim();
-        const email  = form.email.value.trim();
-        if (!nombre || !email) {
-          error.textContent = 'Nombre y email son obligatorios.';
-          error.style.display = 'block';
-          return;
-        }
-
-        try {
-          await grecaptcha.ready();
-          const token = await grecaptcha.execute(
-            '6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp',
-            { action: 'register' }
-          );
-
-          const res = await fetch('/api/register', {
-            method: 'POST',
-            headers: { 'Content-Type':'application/json' },
-            body: JSON.stringify({ nombre, email, recaptchaToken: token })
-          });
-          const data = await res.json();
-
-          if (res.ok && data.ok) {
-            alert('Registro exitoso 🎉');
-            form.reset();
-          } else {
-            alert('Error: ' + (data.error||'Algo salió mal'));
-          }
-        } catch (err) {
-          console.error(err);
-          alert('No se pudo conectar o reCAPTCHA falló.');
-        }
-      });
-    });
-  </script>
+  <!-- Aquí llamamos al JS externo: -->
+  <script src="/script.js"></script>
 </body>
 </html>
