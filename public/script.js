@@ -1,4 +1,4 @@
-/* global grecaptcha */
+/* global  grecaptcha */
 (() => {
   const SITE_KEY = '6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp';
   const f = document.getElementById('f');
