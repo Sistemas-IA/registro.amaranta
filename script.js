@@ -82,7 +82,7 @@ form.addEventListener('submit', async e => {
 
   try {
     // token reCAPTCHA
-    const token = await grecaptcha.execute('YOUR_SITE_KEY', { action:'submit' });
+    const token = await grecaptcha.execute('6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp', { action:'submit' });
     if (!token) throw new Error(UI_TEXT.recaptchaError);
 
     const payload = Object.fromEntries(new FormData(form).entries());
