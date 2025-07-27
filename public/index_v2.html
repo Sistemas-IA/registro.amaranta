@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Autorregistro</title>
+
+  <!-- Reset / Normalise -->
+  <link rel="stylesheet"
+        href="https://unpkg.com/modern-normalize/modern-normalize.css" />
+
+  <!-- ----------  Estilos básicos ----------- -->
+  <style>
+    :root {
+      --gap: 0.6rem;
+      --field-padding: 0.5rem;
+      --btn-padding: 0.6rem 1.4rem;
+      --max-w: 480px;
+      --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      font-family: var(--font);
+      max-width: var(--max-w);
+      margin: 2rem auto;
+      padding: 1rem;
+    }
+
+    label {
+      display: block;
+      margin: var(--gap) 0;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: var(--field-padding);
+    }
+
+    button {
+      margin-top: 1rem;
+      padding: var(--btn-padding);
+      cursor: pointer;
+    }
+
+    /* Honeypots (antispam) */
+    .honey {
+      display: none !important;
+    }
+  </style>
+
+  <!-- reCAPTCHA v3 -->
+  <script
+    src="https://www.google.com/recaptcha/api.js?render=6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp"
+    defer>
+  </script>
+</head>
+
+<body>
+  <h1>Formulario de registro</h1>
+
+  <form id="f" novalidate>
+    <label>
+      Nombre
+      <input name="nombre" required maxlength="60" />
+    </label>
+
+    <label>
+      Apellido
+      <input name="apellido" required maxlength="60" />
+    </label>
+
+    <label>
+      DNI
+      <input name="dni" required pattern="\d{8}" />
+    </label>
+
+    <label>
+      Código Área
+      <input name="codigo" required pattern="\d{2,4}" />
+    </label>
+
+    <label>
+      Nº Celular
+      <input name="numero" required pattern="\d{7,9}" />
+    </label>
+
+    <label>
+      Email
+      <input name="email" type="email" required />
+    </label>
+
+    <label>
+      Dirección
+      <input name="direccion" required maxlength="120" />
+    </label>
+
+    <label>
+      Comentarios
+      <textarea name="comentarios" maxlength="300"></textarea>
+    </label>
+
+    <!-- honeypots -->
+    <input class="honey" name="zona" autocomplete="off" />
+    <input class="honey" name="estado" autocomplete="off" />
+
+    <button type="submit">Enviar</button>
+  </form>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
