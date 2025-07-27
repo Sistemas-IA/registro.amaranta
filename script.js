@@ -4,19 +4,19 @@ const UI_TEXT = {
     nombre      : 'Nombre',
     apellido    : 'Apellido',
     dni         : 'DNI (sin puntos)',
-    codigo      : 'Cod. área',
-    numero      : 'Teléfono',
+    codigo      : 'Cod. área (sin 0)',
+    numero      : 'Número de celular (sin 15)',
     email       : 'Correo electrónico',
-    direccion   : 'Dirección',
-    comentarios : 'Comentarios'
+    direccion   : 'Dirección de recepción de tu pedido',
+    comentarios : '[opcional] Comentarios'
   },
   errors: {
     required   : 'Este campo es obligatorio',
     nombre     : 'Solo letras y espacios',
     apellido   : 'Solo letras y espacios',
-    dni        : 'Debe tener 7‑8 dígitos',
+    dni        : 'Debe tener 8 dígitos',
     codigo     : 'Solo números (2‑4 dígitos)',
-    numero     : 'Solo números (6‑9 dígitos)',
+    numero     : 'Solo números (7‑9 dígitos)',
     email      : 'Formato de correo inválido'
   },
   recaptchaError : 'reCAPTCHA falló, recarga la página',
@@ -25,11 +25,11 @@ const UI_TEXT = {
 
 /* ----------  VALIDACIONES  ---------- */
 const RULES = {
-  nombre  : v => /^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]{2,50}$/.test(v),
-  apellido: v => /^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]{2,50}$/.test(v),
-  dni     : v => /^\d{7,8}$/.test(v),
+  nombre  : v => /^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]{2,30}$/.test(v),
+  apellido: v => /^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]{2,30}$/.test(v),
+  dni     : v => /^\d{8}$/.test(v),
   codigo  : v => /^\d{2,4}$/.test(v),
-  numero  : v => /^\d{6,9}$/.test(v),
+  numero  : v => /^\d{7,9}$/.test(v),
   email   : v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
 };
 
