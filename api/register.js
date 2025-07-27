@@ -7,8 +7,8 @@ import { Ratelimit } from '@upstash/ratelimit';
 const redis     = Redis.fromEnv();                        // lee URL/TOKEN
 const ratelimit = new Ratelimit({
   redis,
-  limiter   : Ratelimit.slidingWindow(5, '5 m'),          // 5 peticiones / 5 min
-  analytics : true                                        // se ve en Upstash
+  limiter   : Ratelimit.slidingWindow(5, '5 m'),          // 5 peticiones / 5 min
+  analytics : true                                        // métrica en Upstash
 });
 
 /* ---------- 2) GOOGLE SHEETS ---------- */
@@ -23,6 +23,10 @@ const SHEET_NAME     = process.env.SHEET_NAME || 'Clientes';
 /* ---------- 3) HANDLER ---------- */
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
+
+  /* 3.0 CORS: autoriza sólo tu dominio */
+  const ALLOWED_ORIGIN = 'https://tu-dominio.com';   // ← CAMBIA aquí
+  res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
 
   /* 3.1 IP real del cliente */
   const ipHeader = (req.headers['x-forwarded-for'] ?? '').split(',')[0] || '';
