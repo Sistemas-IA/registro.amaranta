@@ -25,7 +25,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   /* 3.0 CORS: autoriza sólo tu dominio */
-  const ALLOWED_ORIGIN = 'https://tu-dominio.com';   // ← CAMBIA aquí
+  const ALLOWED_ORIGIN = 'https://registro.amaranta.ar';   // ← CAMBIA aquí
   res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
 
   /* 3.1 IP real del cliente */
