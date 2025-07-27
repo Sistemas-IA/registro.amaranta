@@ -1,17 +1,14 @@
-// middleware.js – Vercel Edge Runtime
-import { NextResponse } from 'next/server';
-
+// middleware.js – Vercel Edge Middleware (framework‑agnostic)
 export const config = {
-  matcher: ['/api/:path*', '/'],  // protege API y página
-  runtime: 'edge'
+  matcher: ['/api/:path*', '/'],   // protege API y página
+  // nada de runtime aquí
 };
 
-// Cambia al dominio real donde vive tu formulario:
-const ALLOWED_ORIGIN = 'https://tu-dominio.com';
+const ALLOWED_ORIGIN = 'https://tu-dominio.com'; // <-- CAMBIA por tu dominio real
 
-export default function middleware(req) {
-  const origin  = req.headers.get('origin')  || '';
-  const referer = req.headers.get('referer') || '';
+export default function middleware(request) {
+  const origin  = request.headers.get('origin')  || '';
+  const referer = request.headers.get('referer') || '';
 
   const badOrigin  = origin && origin !== ALLOWED_ORIGIN;
   const badReferer = referer && !referer.startsWith(ALLOWED_ORIGIN);
@@ -20,7 +17,6 @@ export default function middleware(req) {
     return new Response('Forbidden', { status: 403 });
   }
 
-  const res = NextResponse.next();
-  res.headers.set('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
-  return res;
+  // Continuar la cadena sin modificar respuesta
+  return;                 // equivalente a “Next” en middleware genérico
 }
