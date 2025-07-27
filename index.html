@@ -5,65 +5,49 @@
   <meta name="viewport"      content="width=device-width,initial-scale=1">
   <title>Autorregistro de clientes</title>
 
-  <!-- Estilos mínimos -->
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;padding:2rem;background:#f7fafc}
     form{max-width:420px;margin:auto;background:#fff;padding:2rem;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.06)}
-    label{display:block;font-weight:600;margin:1rem 0 .25rem}
-    input,textarea,select,button{width:100%;padding:.5rem .75rem;border:1px solid #cbd5e0;border-radius:4px;font-size:1rem}
+    input,textarea,button{width:100%;padding:.5rem .75rem;border:1px solid #cbd5e0;border-radius:4px;font-size:1rem;margin-top:1rem}
     input:invalid:not(:focus):not(:placeholder-shown){border-color:#e53e3e}
-    .error{color:#e53e3e;font-size:.875rem;margin-top:.15rem;min-height:1.1em}
-    #success{color:#38a169;font-weight:600;text-align:center;margin-top:1rem;display:none}
-    button{background:#3182ce;color:#fff;border:none;cursor:pointer;margin-top:1.25rem}
+    .error{color:#e53e3e;font-size:.875rem;margin-top:.25rem;min-height:1.1em}
+    #success{color:#38a169;font-weight:600;text-align:center;margin-top:1.5rem;display:none}
+    button{background:#3182ce;color:#fff;border:none;cursor:pointer;margin-top:1.5rem}
     button[disabled]{opacity:.6;cursor:progress}
   </style>
 
-  <!-- reCAPTCHA -->
   <script src="https://www.google.com/recaptcha/api.js?render=YOUR_SITE_KEY"></script>
 </head>
 <body>
   <form id="form-registro" novalidate>
-    <label for="nombre">Nombre *</label>
-    <input id="nombre" name="nombre" type="text" autocomplete="given-name" required>
+    <input id="nombre"      name="nombre"      type="text"  autocomplete="given-name"      required>
     <div class="error"></div>
 
-    <label for="apellido">Apellido *</label>
-    <input id="apellido" name="apellido" type="text" autocomplete="family-name" required>
+    <input id="apellido"    name="apellido"    type="text"  autocomplete="family-name"     required>
     <div class="error"></div>
 
-    <label for="dni">DNI *</label>
-    <input id="dni" name="dni" type="text" inputmode="numeric" required>
+    <input id="dni"         name="dni"         type="text"  inputmode="numeric"            required>
     <div class="error"></div>
 
-    <label for="codigo">Código área *</label>
-    <input id="codigo" name="codigo" type="text" inputmode="numeric" required>
+    <input id="codigo"      name="codigo"      type="text"  inputmode="numeric"            required>
     <div class="error"></div>
 
-    <label for="numero">Teléfono *</label>
-    <input id="numero" name="numero" type="text" inputmode="numeric" required>
+    <input id="numero"      name="numero"      type="text"  inputmode="numeric"            required>
     <div class="error"></div>
 
-    <label for="email">Correo electrónico *</label>
-    <input id="email" name="email" type="email" autocomplete="email" required>
+    <input id="email"       name="email"       type="email" autocomplete="email"           required>
     <div class="error"></div>
 
-    <label for="direccion">Dirección</label>
-    <input id="direccion" name="direccion" type="text" autocomplete="street-address">
+    <input id="direccion"   name="direccion"   type="text"  autocomplete="street-address">
     <div class="error"></div>
 
-    <label for="comentarios">Comentarios</label>
     <textarea id="comentarios" name="comentarios" rows="3"></textarea>
     <div class="error"></div>
 
-    <label for="lista">Lista (grupo)</label>
-    <select id="lista" name="lista">
-      <option value="">— Selecciona —</option>
-      <option value="VIP">VIP</option>
-      <option value="Regular">Regular</option>
-    </select>
-    <div class="error"></div>
+    <!-- input oculto para la lista -->
+    <input id="lista" name="lista" type="hidden" value="">
 
-    <button id="btnEnviar" type="submit">Enviar</button>
+    <button id="btnEnviar"  type="submit">Enviar</button>
     <div id="success">¡Registro enviado correctamente!</div>
   </form>
 
