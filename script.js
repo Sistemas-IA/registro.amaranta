@@ -1,14 +1,14 @@
 /* ----------  CONFIGURACIÓN CENTRALIZADA  ---------- */
 const UI_TEXT = {
   placeholders: {
-    nombre      : 'Ej.: Juan',
-    apellido    : 'Ej.: Pérez',
-    dni         : 'Sin puntos, solo números',
-    codigo      : 'Ej.: 11',
-    numero      : 'Ej.: 12345678',
-    email       : 'ejemplo@correo.com',
-    direccion   : 'Calle y número',
-    comentarios : 'Escribe tus notas'
+    nombre      : 'Nombre',
+    apellido    : 'Apellido',
+    dni         : 'DNI (sin puntos)',
+    codigo      : 'Cod. área',
+    numero      : 'Teléfono',
+    email       : 'Correo electrónico',
+    direccion   : 'Dirección',
+    comentarios : 'Comentarios'
   },
   errors: {
     required   : 'Este campo es obligatorio',
@@ -23,7 +23,7 @@ const UI_TEXT = {
   serverError    : 'No se pudo procesar el registro'
 };
 
-/* ----------  EXPRESSIONS DE VALIDACIÓN  ---------- */
+/* ----------  VALIDACIONES  ---------- */
 const RULES = {
   nombre  : v => /^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]{2,50}$/.test(v),
   apellido: v => /^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]{2,50}$/.test(v),
@@ -37,26 +37,31 @@ const RULES = {
 const form    = document.getElementById('form-registro');
 const success = document.getElementById('success');
 
-/* 1) Coloca placeholders automáticamente */
+/* 1) Placeholder en cada input */
 for (const [id, text] of Object.entries(UI_TEXT.placeholders)) {
   const el = document.getElementById(id);
   if (el) el.placeholder = text;
 }
 
-/* 2) Manejador de envío */
+/* 2) Rellenar campo oculto "lista" desde la URL ?l= */
+const params     = new URLSearchParams(window.location.search);
+const listaParam = params.get('l') || '';
+document.getElementById('lista').value = listaParam;
+
+/* 3) Envío del formulario */
 form.addEventListener('submit', async e => {
   e.preventDefault();
   clearErrors();
   success.style.display = 'none';
 
-  // 2.1) Validaciones cliente
+  // Cliente validations
   let valid = true;
   for (const field of form.elements) {
-    if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement))
-      continue;
+    if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement)) continue;
+    if (field.type === 'hidden') continue;       // omite lista oculta
 
-    const id   = field.id;
-    const val  = field.value.trim();
+    const id  = field.id;
+    const val = field.value.trim();
 
     // requerido
     if (field.required && !val) {
@@ -64,7 +69,6 @@ form.addEventListener('submit', async e => {
       valid = false;
       continue;
     }
-
     // regla específica
     if (RULES[id] && val && !RULES[id](val)) {
       setError(field, UI_TEXT.errors[id]);
@@ -73,20 +77,17 @@ form.addEventListener('submit', async e => {
   }
   if (!valid) return;
 
-  // 2.2) Disable botón mientras enviamos
   const btn = form.querySelector('button[type="submit"]');
   btn.disabled = true;
 
   try {
-    // 2.3) reCAPTCHA v3 token
+    // token reCAPTCHA
     const token = await grecaptcha.execute('YOUR_SITE_KEY', { action:'submit' });
     if (!token) throw new Error(UI_TEXT.recaptchaError);
 
-    // 2.4) Construir payload
     const payload = Object.fromEntries(new FormData(form).entries());
     payload.recaptchaToken = token;
 
-    // 2.5) Enviar al API
     const res = await fetch('/api/register', {
       method : 'POST',
       headers: { 'Content-Type':'application/json' },
@@ -95,20 +96,19 @@ form.addEventListener('submit', async e => {
 
     if (!res.ok) throw new Error(res.error || UI_TEXT.serverError);
 
-    // 2.6) OK!
     form.reset();
     success.style.display = 'block';
   } catch (err) {
-    alert(err.message);         // último recurso; no bloquea la UI
+    alert(err.message);
   } finally {
     btn.disabled = false;
   }
 });
 
-/* ----------  helpers de UI  ---------- */
+/* ----------  helpers  ---------- */
 function setError(field, message) {
-  const errorEl = field.nextElementSibling;
-  if (errorEl) errorEl.textContent = message;
+  const errEl = field.nextElementSibling;
+  if (errEl) errEl.textContent = message;
   field.classList.add('invalid');
 }
 
