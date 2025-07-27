@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
-    "googleapis": "^133.0.0",
-    "node-fetch": "^3.4.1"
+    "googleapis": "^133.0.0"
   }
 }
