@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport"      content="width=device-width,initial-scale=1">
+  <title>Autorregistro de clientes</title>
+
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;padding:2rem;background:#f7fafc}
+    form{max-width:420px;margin:auto;background:#fff;padding:2rem;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+    input,textarea,button{width:100%;padding:.5rem .75rem;border:1px solid #cbd5e0;border-radius:4px;font-size:1rem;margin-top:1rem}
+    input:invalid:not(:focus):not(:placeholder-shown){border-color:#e53e3e}
+    .error{color:#e53e3e;font-size:.875rem;margin-top:.25rem;min-height:1.1em}
+    #success{color:#38a169;font-weight:600;text-align:center;margin-top:1.5rem;display:none}
+    button{background:#3182ce;color:#fff;border:none;cursor:pointer;margin-top:1.5rem}
+    button[disabled]{opacity:.6;cursor:progress}
+  </style>
+
+  <script src="https://www.google.com/recaptcha/api.js?render=6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp"></script>
+</head>
+<body>
+  <form id="form-registro" novalidate>
+    <input id="nombre"      name="nombre"      type="text"  autocomplete="given-name"      required>
+    <div class="error"></div>
+
+    <input id="apellido"    name="apellido"    type="text"  autocomplete="family-name"     required>
+    <div class="error"></div>
+
+    <input id="dni"         name="dni"         type="text"  inputmode="numeric"            required>
+    <div class="error"></div>
+
+    <input id="codigo"      name="codigo"      type="text"  inputmode="numeric"            required>
+    <div class="error"></div>
+
+    <input id="numero"      name="numero"      type="text"  inputmode="numeric"            required>
+    <div class="error"></div>
+
+    <input id="email"       name="email"       type="email" autocomplete="email"           required>
+    <div class="error"></div>
+
+    <input id="direccion"   name="direccion"   type="text"  autocomplete="street-address">
+    <div class="error"></div>
+
+    <textarea id="comentarios" name="comentarios" rows="3"></textarea>
+    <div class="error"></div>
+
+    <!-- input oculto para la lista -->
+    <input id="lista" name="lista" type="hidden" value="">
+
+    <button id="btnEnviar"  type="submit">Enviar</button>
+    <div id="success">¡Registro enviado correctamente!</div>
+  </form>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
