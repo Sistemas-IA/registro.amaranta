@@ -1,0 +1,10 @@
+{
+  "name": "registro-amaranta",
+  "version": "1.0.0",
+  "description": "Formulario de autorregistro (cliente ➜ Vercel ➜ Google Sheets)",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@vercel/kv": "latest"
+  }
+}
