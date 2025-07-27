@@ -5,6 +5,7 @@
   "dependencies": {
     "googleapis": "^133.0.0",
     "@upstash/redis": "^1.25.3",
-    "@upstash/ratelimit": "^1.0.7"
+    "@upstash/ratelimit": "^1.0.7",
+    "@sentry/node": "^8.1.0"
   }
 }
