@@ -1,41 +1,72 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Autorregistro</title>
-  <link rel="stylesheet"
-        href="https://unpkg.com/modern-normalize/modern-normalize.css" />
+  <meta charset="utf-8">
+  <meta name="viewport"      content="width=device-width,initial-scale=1">
+  <title>Autorregistro de clientes</title>
+
+  <!-- Estilos mínimos -->
   <style>
-    body{font-family:sans-serif;max-width:480px;margin:2rem auto;padding:1rem}
-    label{display:block;margin:.6rem 0}
-    input,textarea{width:100%;padding:.5rem}
-    button{margin-top:1rem;padding:.6rem 1.4rem}
-    .honey{display:none!important}
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;padding:2rem;background:#f7fafc}
+    form{max-width:420px;margin:auto;background:#fff;padding:2rem;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+    label{display:block;font-weight:600;margin:1rem 0 .25rem}
+    input,textarea,select,button{width:100%;padding:.5rem .75rem;border:1px solid #cbd5e0;border-radius:4px;font-size:1rem}
+    input:invalid:not(:focus):not(:placeholder-shown){border-color:#e53e3e}
+    .error{color:#e53e3e;font-size:.875rem;margin-top:.15rem;min-height:1.1em}
+    #success{color:#38a169;font-weight:600;text-align:center;margin-top:1rem;display:none}
+    button{background:#3182ce;color:#fff;border:none;cursor:pointer;margin-top:1.25rem}
+    button[disabled]{opacity:.6;cursor:progress}
   </style>
 
-  <!-- reCAPTCHA v3 -->
-  <script src="https://www.google.com/recaptcha/api.js?render=6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp" defer></script>
+  <!-- reCAPTCHA -->
+  <script src="https://www.google.com/recaptcha/api.js?render=YOUR_SITE_KEY"></script>
 </head>
 <body>
-<h1>Formulario de registro</h1>
+  <form id="form-registro" novalidate>
+    <label for="nombre">Nombre *</label>
+    <input id="nombre" name="nombre" type="text" autocomplete="given-name" required>
+    <div class="error"></div>
 
-<form id="f" novalidate>
-  <label>Nombre        <input name="nombre"   required maxlength="60"></label>
-  <label>Apellido      <input name="apellido" required maxlength="60"></label>
-  <label>DNI           <input name="dni"      required pattern="\d{8}"></label>
-  <label>Código área   <input name="codigo"   required pattern="\d{2,4}"></label>
-  <label>Nº celular    <input name="numero"   required pattern="\d{7,9}"></label>
-  <label>Email         <input name="email"    required type="email"></label>
-  <label>Dirección     <input name="direccion" required maxlength="120"></label>
-  <label>Comentarios   <textarea name="comentarios" maxlength="300"></textarea></label>
-  <!-- honeypots -->
-  <input class="honey" name="zona"   autocomplete="off">
-  <input class="honey" name="estado" autocomplete="off">
+    <label for="apellido">Apellido *</label>
+    <input id="apellido" name="apellido" type="text" autocomplete="family-name" required>
+    <div class="error"></div>
 
-  <button type="submit">Enviar</button>
-</form>
+    <label for="dni">DNI *</label>
+    <input id="dni" name="dni" type="text" inputmode="numeric" required>
+    <div class="error"></div>
 
-<script src="script.js" defer></script>
+    <label for="codigo">Código área *</label>
+    <input id="codigo" name="codigo" type="text" inputmode="numeric" required>
+    <div class="error"></div>
+
+    <label for="numero">Teléfono *</label>
+    <input id="numero" name="numero" type="text" inputmode="numeric" required>
+    <div class="error"></div>
+
+    <label for="email">Correo electrónico *</label>
+    <input id="email" name="email" type="email" autocomplete="email" required>
+    <div class="error"></div>
+
+    <label for="direccion">Dirección</label>
+    <input id="direccion" name="direccion" type="text" autocomplete="street-address">
+    <div class="error"></div>
+
+    <label for="comentarios">Comentarios</label>
+    <textarea id="comentarios" name="comentarios" rows="3"></textarea>
+    <div class="error"></div>
+
+    <label for="lista">Lista (grupo)</label>
+    <select id="lista" name="lista">
+      <option value="">— Selecciona —</option>
+      <option value="VIP">VIP</option>
+      <option value="Regular">Regular</option>
+    </select>
+    <div class="error"></div>
+
+    <button id="btnEnviar" type="submit">Enviar</button>
+    <div id="success">¡Registro enviado correctamente!</div>
+  </form>
+
+  <script src="script.js" defer></script>
 </body>
 </html>
