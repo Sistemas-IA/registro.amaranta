@@ -31,7 +31,7 @@ const RULES = {
   dni     : v => /^\d{7,8}$/.test(v),
   codigo  : v => /^\d{2,4}$/.test(v),
   numero  : v => /^\d{6,9}$/.test(v),
-  email   : v => v.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+  email   : v => v.length <= 100 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
   direccion  : v => v.length <= 100,
   comentarios: v => v.length <= 250            // opcional
 };
