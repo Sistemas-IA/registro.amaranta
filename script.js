@@ -17,7 +17,7 @@ const UI_TEXT = {
     dni        : '7‑8 dígitos',
     codigo     : '2‑4 dígitos',
     numero     : '6‑9 dígitos',
-    email      : 'Correo inválido o demasiado largo',
+    email      : 'Correo inválido',
     direccion  : 'Máx. 100 caracteres',
     comentarios: 'Máx. 250 caracteres'
   },
