@@ -91,33 +91,34 @@ function validate() {
     if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement))
       continue;
     if (field.type === 'hidden') continue;
+    if (field.id === 'comentarios') continue;      // comentarios es opcional
 
     const id  = field.id;
     const val = field.value.trim();
 
     if (!val) {
-      setErr(field, UI_TEXT.errors.required); ok=false; continue;
+      setErr(field, UI_TEXT.errors.required); ok = false; continue;
     }
     if (RULES[id] && !RULES[id](val)) {
-      setErr(field, UI_TEXT.errors[id]); ok=false;
+      setErr(field, UI_TEXT.errors[id]); ok = false;
     }
   }
   return ok;
 }
 
-function setErr(field,msg){
+function setErr(field, msg){
   const e = field.nextElementSibling;
   if (e) e.textContent = msg;
   field.classList.add('invalid');
 }
 function clearErrors(){
-  form.querySelectorAll('.error').forEach(el=>el.textContent='');
-  form.querySelectorAll('.invalid').forEach(el=>el.classList.remove('invalid'));
+  form.querySelectorAll('.error').forEach(el => el.textContent = '');
+  form.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
 }
 
 /* ---------- MODAL ---------- */
 function showModal(msg){
   mMsg.textContent = msg;
   modal.style.display = 'flex';
-  modal.onclick = () => modal.style.display='none';
+  modal.onclick = () => modal.style.display = 'none';
 }
