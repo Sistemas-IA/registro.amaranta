@@ -32,6 +32,7 @@ export default async function handler(req, res) {
   const ip = (req.headers['x-forwarded-for'] ?? '').split(',')[0]
            || req.socket.remoteAddress || 'unknown';
 
+  /* rate‑limit */
   const { success } = await ratelimit.limit(ip);
   if (!success) {
     await logFail(ip, 'Rate‑limit 429');
@@ -49,9 +50,11 @@ export default async function handler(req, res) {
     const score = await verifyCaptcha(recaptchaToken, ip);
     if (score < 0.5) throw new Error('reCAPTCHA rechazó al usuario');
 
-    /* Validar lista 1‑50 si viene */
-    if (lista && !RE_NUM_1_50.test(lista))
+    /* validar lista 1‑50 si viene */
+    if (lista && !RE_NUM_1_50.test(lista)) {
+      await logFail(ip, 'Lista inválida');
       throw new Error('Lista inválida (debe ser número 1‑50)');
+    }
 
     /* Unicidad */
     const telefono = normalizarTel(codigo, numero);
@@ -65,7 +68,7 @@ export default async function handler(req, res) {
           r[4]?.toLowerCase() === email.toLowerCase()
     )) throw new Error('DNI, teléfono o email ya registrado');
 
-    /* Limitar longitudes defensivamente */
+    /* Limitar longitudes defensivas */
     const fila = [
       sanitize(nombre), sanitize(apellido), sanitize(dni),
       telefono, sanitize(email),
