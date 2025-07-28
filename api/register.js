@@ -1,71 +1,88 @@
 // Node 18 ESM
-import { google } from 'googleapis';
+import { google }    from 'googleapis';
+import { Redis }     from '@upstash/redis';
+import { Ratelimit } from '@upstash/ratelimit';
 
+/* ---------- 1) RATE‑LIMIT ---------- */
+const redis     = Redis.fromEnv();                        // URL+TOKEN vía env
+const ratelimit = new Ratelimit({
+  redis,
+  limiter  : Ratelimit.slidingWindow(5, '5 m'),           // 5 req / 5 min
+  analytics: true
+});
+
+/* ---------- 2) GOOGLE SHEETS ---------- */
 const auth = new google.auth.GoogleAuth({
   credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT),
-  scopes: ['https://www.googleapis.com/auth/spreadsheets']
+  scopes     : ['https://www.googleapis.com/auth/spreadsheets']
 });
-const sheets = google.sheets({ version: 'v4', auth });
-
+const sheets         = google.sheets({ version: 'v4', auth });
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 const SHEET_NAME     = process.env.SHEET_NAME || 'Clientes';
 
+/* ---------- 3) HANDLER ---------- */
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
+
+  /* CORS – solo tu dominio */
+  const ALLOWED_ORIGIN = 'https://registro.amaranta.ar';
+  res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+
+  /* IP para rate‑limit */
+  const ip = (req.headers['x-forwarded-for'] ?? '').split(',')[0]
+           || req.socket.remoteAddress || 'unknown';
+
+  const { success } = await ratelimit.limit(ip);
+  if (!success)
+    return res.status(429).json({ ok:false, error:'Demasiadas peticiones, intenta luego.' });
 
   try {
     const {
       nombre, apellido, dni, codigo, numero, email,
-      direccion, comentarios = '', lista, recaptchaToken, ip
+      direccion = '', comentarios = '', lista = '', recaptchaToken
     } = req.body || {};
 
-    // 1. Verificar reCAPTCHA v3 (>0.5)
+    /* reCAPTCHA v3 */
     const score = await verifyCaptcha(recaptchaToken, ip);
     if (score < 0.5) throw new Error('reCAPTCHA rechazó al usuario');
 
-    // 2. Normalizar teléfono y comprobar unicidad
+    /* Unicidad */
     const telefono = normalizarTel(codigo, numero);
-
     const existing = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEET_NAME}!A2:E`    // A‑E = hasta Email
+      range: `${SHEET_NAME}!A2:E`
     });
 
     if (existing.data.values?.some(r =>
-        r[2] === dni ||                 // C = DNI
-        r[3] === telefono ||            // D = Teléfono normalizado
-        r[4]?.toLowerCase() === email.toLowerCase()   // E = Email
+          r[2] === dni ||
+          r[3] === telefono ||
+          r[4]?.toLowerCase() === email.toLowerCase()
     )) throw new Error('DNI, teléfono o email ya registrado');
 
-    // 3. Insertar la nueva fila (Teléfono en columna D)
+    /* Sanitizar e insertar */
     const fila = [
-      nombre, apellido, dni,
-      telefono,            // D
-      email,               // E
-      direccion, comentarios,
-      'Pendiente',         // zona (H)
-      'Pendiente',         // estado (I)
-      lista,
-      new Date().toISOString(),
-      ip
+      sanitize(nombre), sanitize(apellido), sanitize(dni),
+      telefono, sanitize(email),
+      sanitize(direccion), sanitize(comentarios),
+      'Pendiente', 'Pendiente',
+      sanitize(lista), new Date().toISOString(), ip
     ];
 
     await sheets.spreadsheets.values.append({
-      spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEET_NAME}!A:Z`,
+      spreadsheetId : SPREADSHEET_ID,
+      range         : `${SHEET_NAME}!A:Z`,
       valueInputOption: 'RAW',
-      requestBody: { values: [fila] }
+      requestBody   : { values: [fila] }
     });
 
-    // 4. Enviar correo (opcional)
-    // await sendMail(nombre, email);
-
-    res.json({ ok: true });
+    res.json({ ok:true });
   } catch (err) {
-    res.status(400).json({ ok: false, error: err.message });
+    console.error(err);
+    res.status(400).json({ ok:false, error: err.message });
   }
 }
 
+/* ---------- HELPERS ---------- */
 async function verifyCaptcha(token, ip) {
   const params = new URLSearchParams({
     secret   : process.env.RECAPTCHA_SECRET,
@@ -79,6 +96,10 @@ async function verifyCaptcha(token, ip) {
   return r.score || 0;
 }
 
-function normalizarTel(cod, num) {
-  return '549' + cod + num;
+function normalizarTel(cod = '', num = '') { return '549' + cod + num; }
+
+function sanitize(v = '') {
+  return String(v).trim()
+    .replace(/^[=+\-@]/, "'$&")   // evita fórmulas
+    .replace(/[<>]/g, '');        // evita XSS/HTML
 }
