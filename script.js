@@ -20,7 +20,7 @@ const UI_TEXT = {
     email      : 'Correo inválido o demasiado largo',
     direccion  : 'Máx. 100 caracteres',
     comentarios: 'Máx. 250 caracteres',
-    lista      : 'Lista debe ser número 1‑50'
+    lista      : 'Enlace inválido, solicita uno nuevo'
   },
   serverError : 'No se pudo procesar el registro',
   captchaFail : 'reCAPTCHA falló, recarga la página'
@@ -36,7 +36,7 @@ const RULES = {
   numero  : v => /^\d{6,9}$/.test(v),
   email   : v => v.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
   direccion  : v => v.length <= 100,
-  comentarios: v => v.length <= 250
+  comentarios: v => v.length <= 250            // opcional
 };
 
 /* ---------- ELEMENTOS ---------- */
@@ -61,6 +61,12 @@ form.noValidate = true;
 form.addEventListener('submit', async e => {
   e.preventDefault();
   clearErrors();
+
+  /* lista debe ser 1‑50 si viene */
+  if (lParam && !RE_NUM_1_50.test(lParam)) {
+    showModal(UI_TEXT.errors.lista);
+    return;
+  }
 
   if (!validate()) return;
 
@@ -112,13 +118,6 @@ function validate() {
       setErr(field, UI_TEXT.errors[id]);
       ok = false;
     }
-  }
-
-  /* regla extra para lista (hidden) */
-  const listaVal = document.getElementById('lista').value.trim();
-  if (listaVal && !RE_NUM_1_50.test(listaVal)) {
-    showModal(UI_TEXT.errors.lista);
-    ok = false;
   }
   return ok;
 }
