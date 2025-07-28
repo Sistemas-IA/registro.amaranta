@@ -31,6 +31,12 @@ export default async function handler(req, res) {
   const ip = (req.headers['x-forwarded-for'] ?? '').split(',')[0]
            || req.socket.remoteAddress || 'unknown';
 
+  /* Honeypot: zona o estado rellenos */
+  if (req.body?.zona || req.body?.estado) {
+    await logFail(ip, 'Honeypot');
+    return res.status(400).end();
+  }
+
   const { success } = await ratelimit.limit(ip);
   if (!success) {
     await logFail(ip, 'Rate‑limit 429');
@@ -72,13 +78,13 @@ export default async function handler(req, res) {
     await sheets.spreadsheets.values.append({
       spreadsheetId : SPREADSHEET_ID,
       range         : `${SHEET_NAME}!A:Z`,
-      valueInputOption: 'RAW',
+      valueInputOption:'RAW',
       requestBody   : { values: [fila] }
     });
 
     res.json({ ok:true });
   } catch (err) {
-    /* --- Manejo elegante de cuota --- */
+    /* --- Manejo de cuota --- */
     const quota = err?.code === 429 || err?.code === 403 ||
                   /quota|rate/i.test(err?.errors?.[0]?.reason || '');
     await logFail(ip, err.message || String(err));
@@ -125,5 +131,5 @@ async function logFail(ip,msg){
       valueInputOption:'RAW',
       requestBody   : { values:[[ new Date().toISOString(), ip, msg ]] }
     });
-  } catch{ /* si la pestaña no existe o hay cuota 0, ignoramos */ }
+  } catch{}   // si la pestaña no existe o no hay cuota, lo ignoramos
 }
