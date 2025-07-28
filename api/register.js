@@ -19,14 +19,15 @@ const auth = new google.auth.GoogleAuth({
 const sheets         = google.sheets({ version: 'v4', auth });
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 const SHEET_NAME     = process.env.SHEET_NAME || 'Clientes';
-const FAIL_SHEET     = 'IntentosFallidos';   // pestaña para rechazos
+const FAIL_SHEET     = 'IntentosFallidos';
+
+const RE_NUM_1_50 = /^(?:[1-9]|[1-4]\d|50)$/;
 
 /* ---------- 3) HANDLER ---------- */
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  const ALLOWED_ORIGIN = 'https://registro.amaranta.ar';
-  res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+  res.setHeader('Access-Control-Allow-Origin', 'https://registro.amaranta.ar');
 
   const ip = (req.headers['x-forwarded-for'] ?? '').split(',')[0]
            || req.socket.remoteAddress || 'unknown';
@@ -48,6 +49,10 @@ export default async function handler(req, res) {
     const score = await verifyCaptcha(recaptchaToken, ip);
     if (score < 0.5) throw new Error('reCAPTCHA rechazó al usuario');
 
+    /* Validar lista 1‑50 si viene */
+    if (lista && !RE_NUM_1_50.test(lista))
+      throw new Error('Lista inválida (debe ser número 1‑50)');
+
     /* Unicidad */
     const telefono = normalizarTel(codigo, numero);
     const existing = await sheets.spreadsheets.values.get({
@@ -60,25 +65,26 @@ export default async function handler(req, res) {
           r[4]?.toLowerCase() === email.toLowerCase()
     )) throw new Error('DNI, teléfono o email ya registrado');
 
-    /* Sanitizar e insertar */
+    /* Limitar longitudes defensivamente */
     const fila = [
       sanitize(nombre), sanitize(apellido), sanitize(dni),
       telefono, sanitize(email),
-      sanitize(direccion), sanitize(comentarios),
-      'Pendiente','Pendiente',
-      sanitize(lista), new Date().toISOString(), ip
+      sanitize(direccion.slice(0,100)),
+      sanitize(comentarios.slice(0,250)),
+      'Pendiente', 'Pendiente',
+      sanitize(lista.slice(0,50)),
+      new Date().toISOString(), ip
     ];
 
     await sheets.spreadsheets.values.append({
       spreadsheetId : SPREADSHEET_ID,
       range         : `${SHEET_NAME}!A:Z`,
-      valueInputOption: 'RAW',
+      valueInputOption:'RAW',
       requestBody   : { values: [fila] }
     });
 
     res.json({ ok:true });
   } catch (err) {
-    /* --- Manejo elegante de cuota --- */
     const quota = err?.code === 429 || err?.code === 403 ||
                   /quota|rate/i.test(err?.errors?.[0]?.reason || '');
     await logFail(ip, err.message || String(err));
@@ -98,9 +104,9 @@ export default async function handler(req, res) {
 /* ---------- HELPERS ---------- */
 async function verifyCaptcha(token, ip) {
   const params = new URLSearchParams({
-    secret   : process.env.RECAPTCHA_SECRET,
-    response : token,
-    remoteip : ip
+    secret: process.env.RECAPTCHA_SECRET,
+    response: token,
+    remoteip: ip
   });
   const r = await fetch('https://www.google.com/recaptcha/api/siteverify', {
     method:'POST', body:params
@@ -116,14 +122,14 @@ function sanitize(v=''){
     .replace(/[<>]/g,'');
 }
 
-/* Guarda rechazos en la hoja "IntentosFallidos" */
+/* Guarda rechazos */
 async function logFail(ip,msg){
   try {
     await sheets.spreadsheets.values.append({
-      spreadsheetId : SPREADSHEET_ID,
-      range         : `${FAIL_SHEET}!A:C`,
+      spreadsheetId: SPREADSHEET_ID,
+      range        : `${FAIL_SHEET}!A:C`,
       valueInputOption:'RAW',
-      requestBody   : { values:[[ new Date().toISOString(), ip, msg ]] }
+      requestBody  : { values:[[ new Date().toISOString(), ip, msg ]] }
     });
-  } catch{ /* si la pestaña no existe o hay cuota 0, ignoramos */ }
+  } catch {}
 }
