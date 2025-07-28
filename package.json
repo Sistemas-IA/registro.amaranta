@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
-    "googleapis": "^133.0.0"
+    "googleapis": "^133.0.0",
+    "@upstash/redis": "^1.25.3",
+    "@upstash/ratelimit": "^1.0.7"
   }
 }
