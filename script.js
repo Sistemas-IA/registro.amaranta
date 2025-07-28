@@ -19,14 +19,11 @@ const UI_TEXT = {
     numero     : '6‑9 dígitos',
     email      : 'Correo inválido o demasiado largo',
     direccion  : 'Máx. 100 caracteres',
-    comentarios: 'Máx. 250 caracteres',
-    lista      : 'Enlace inválido, solicita uno nuevo'
+    comentarios: 'Máx. 250 caracteres'
   },
   serverError : 'No se pudo procesar el registro',
   captchaFail : 'reCAPTCHA falló, recarga la página'
 };
-
-const RE_NUM_1_50 = /^(?:[1-9]|[1-4]\d|50)$/;
 
 const RULES = {
   nombre  : v => /^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]{2,50}$/.test(v),
@@ -51,8 +48,8 @@ for (const [id, t] of Object.entries(UI_TEXT.placeholders)) {
 }
 
 /* lista desde ?l= */
-const lParam = new URLSearchParams(location.search).get('l') || '';
-document.getElementById('lista').value = lParam;
+document.getElementById('lista').value =
+  new URLSearchParams(location.search).get('l') || '';
 
 /* desactiva validación HTML */
 form.noValidate = true;
@@ -61,12 +58,6 @@ form.noValidate = true;
 form.addEventListener('submit', async e => {
   e.preventDefault();
   clearErrors();
-
-  /* lista debe ser 1‑50 si viene */
-  if (lParam && !RE_NUM_1_50.test(lParam)) {
-    showModal(UI_TEXT.errors.lista);
-    return;
-  }
 
   if (!validate()) return;
 
