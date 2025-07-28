@@ -4,11 +4,11 @@ const UI_TEXT = {
     nombre      : 'Nombre',
     apellido    : 'Apellido',
     dni         : 'DNI (sin puntos)',
-    codigo      : 'Cod. área',
-    numero      : 'Teléfono',
+    codigo      : 'Cod. área (sin 0)',
+    numero      : 'Número de celular (sin 15)',
     email       : 'Correo electrónico',
-    direccion   : 'Dirección',
-    comentarios : 'Comentarios'
+    direccion   : 'Dirección para la entrega de tu vianda',
+    comentarios : '[OPCIONAL] Comentarios'
   },
   errors: {
     required : 'Este campo es obligatorio',
