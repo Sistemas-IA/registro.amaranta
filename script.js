@@ -7,8 +7,8 @@ const UI_TEXT = {
     codigo      : 'Cod. área (sin 0)',
     numero      : 'Número de celular (sin 15)',
     email       : 'Correo electrónico',
-    direccion   : 'Dirección para la entrega de tu vianda (máx. 100)',
-    comentarios : '[OPCIONAL] Comentarios (máx. 250)'
+    direccion   : 'Dirección para la entrega de tu vianda',
+    comentarios : '[OPCIONAL] Comentarios adicionales'
   },
   errors: {
     required   : 'Este campo es obligatorio',
