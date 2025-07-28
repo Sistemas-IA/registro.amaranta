@@ -52,7 +52,7 @@ export default async function handler(req, res) {
 
     /* validar lista 1‑50 si viene */
     if (lista && !RE_NUM_1_50.test(lista)) {
-      throw new Error('Lista inválida (debe ser número 1‑50)');
+      throw new Error('Enlace inválido, solicitá un nuevo link');
     }
 
     /* Unicidad */
