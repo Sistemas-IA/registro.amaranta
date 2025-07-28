@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Autorregistro</title>
+
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f7fafc;margin:0;padding:2rem}
+    form{max-width:420px;margin:auto;background:#fff;padding:2rem;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+    input,textarea,button{width:100%;padding:.5rem .75rem;border:1px solid #cbd5e0;border-radius:4px;font-size:1rem;margin-top:1rem}
+    .error{color:#e53e3e;font-size:.875rem;margin-top:.25rem;min-height:1.1em}
+    button{background:#3182ce;color:#fff;border:none;cursor:pointer;margin-top:1.5rem}
+    button[disabled]{opacity:.6;cursor:progress}
+    #modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:9999}
+    #modal div{background:#fff;padding:1.5rem 2rem;border-radius:8px;max-width:320px;text-align:center}
+  </style>
+
+  <script src="https://www.google.com/recaptcha/api.js?render=6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp"></script>
+</head>
+<body>
+  <form id="form" novalidate>
+    <input id="nombre"      name="nombre"      type="text">
+    <div class="error"></div>
+
+    <input id="apellido"    name="apellido"    type="text">
+    <div class="error"></div>
+
+    <input id="dni"         name="dni"         type="text" inputmode="numeric">
+    <div class="error"></div>
+
+    <input id="codigo"      name="codigo"      type="text" inputmode="numeric">
+    <div class="error"></div>
+
+    <input id="numero"      name="numero"      type="text" inputmode="numeric">
+    <div class="error"></div>
+
+    <input id="email"       name="email"       type="email">
+    <div class="error"></div>
+
+    <input id="direccion"   name="direccion"   type="text">
+    <div class="error"></div>
+
+    <textarea id="comentarios" name="comentarios" rows="3"></textarea>
+    <div class="error"></div>
+
+    <input id="lista" name="lista" type="hidden" value="">
+
+    <button id="btnEnviar" type="submit">Enviar</button>
+  </form>
+
+  <!-- Modal -->
+  <div id="modal"><div id="modal-msg"></div></div>
+  <script src="script.js" defer></script>
+</body>
+</html>
