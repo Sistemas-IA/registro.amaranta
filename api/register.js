@@ -52,7 +52,6 @@ export default async function handler(req, res) {
 
     /* validar lista 1‑50 si viene */
     if (lista && !RE_NUM_1_50.test(lista)) {
-      await logFail(ip, 'Lista inválida');
       throw new Error('Lista inválida (debe ser número 1‑50)');
     }
 
