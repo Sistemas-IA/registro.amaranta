@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Autorregistro</title>
+<script src="https://www.google.com/recaptcha/api.js?render=6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<style>
+    :root{
+      --green-900:#2d5246;
+      --green-800:#336353;
+      --green-700:#3f745f;
+      --green-500:#6b9781;
+      --green-300:#a8c4b3;
+      --ink:#1e2a26;
+      --error:#c44536;
+      --card-bg: rgba(255,255,255,0.92);
+      --card-border:#dfe7e2;
+      --ring: rgba(63,116,95,.25);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:"Poppins",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      color:var(--ink);
+      line-height:1.5;
+      background:
+        linear-gradient(rgba(255,255,255,.88),rgba(255,255,255,.88)),
+        url('assets/fondo.jpg') center/cover fixed no-repeat;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding:3rem 1rem 4rem;
+    }
+    header{
+      width:min(680px,100%);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:.75rem;
+      margin:0 auto 1rem;
+    }
+    header img{
+      width:min(520px,90%);
+      height:auto;
+      display:block;
+      filter:drop-shadow(0 10px 18px rgba(0,0,0,.06));
+    }
+    .card{
+      width:min(680px,100%);
+      background:var(--card-bg);
+      border:1px solid var(--card-border);
+      border-radius:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,.06);
+      backdrop-filter:saturate(1.1) blur(2px);
+      padding:2rem;
+    }
+    form{
+      margin:0;
+      display:grid;
+      grid-template-columns:1fr;
+      gap:1rem;
+    }
+    label{font-size:.95rem;font-weight:500;color:var(--green-800)}
+    input,textarea,select,button{
+      font-family:inherit;
+      font-size:1rem;
+    }
+    input,textarea,select{
+      width:100%;
+      padding:.75rem .9rem;
+      border:1px solid #ccd8d2;
+      border-radius:12px;
+      background:#fff;
+      transition:border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+    }
+    input::placeholder,textarea::placeholder{color:#8aa295}
+    input:focus,textarea:focus,select:focus{
+      outline:none;
+      border-color:var(--green-700);
+      box-shadow:0 0 0 .25rem var(--ring);
+    }
+    .invalid{border-color:var(--error)!important;box-shadow:0 0 0 .25rem rgba(196,69,54,.15)!important}
+    .error{color:var(--error);font-size:.875rem;min-height:1.1em}
+    .hint{color:#5e786c;font-size:.875rem;margin-top:-.25rem}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    @media (max-width: 520px){ .row{grid-template-columns:1fr} }
+    button{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:.5rem;
+      padding:.9rem 1rem;
+      border:none;
+      border-radius:14px;
+      background:linear-gradient(180deg,var(--green-700),var(--green-800));
+      color:#fff;
+      font-weight:600;
+      letter-spacing:.02em;
+      cursor:pointer;
+      box-shadow:0 6px 16px rgba(46,90,77,.22);
+      transition:transform .06s ease, filter .15s ease, box-shadow .15s ease;
+    }
+    button:hover{filter:brightness(1.02)}
+    button:active{transform:translateY(1px)}
+    button[disabled]{opacity:.7;cursor:progress}
+    /* modal */
+    #modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(17,34,29,.45);z-index:9999}
+    #modal div{background:#fff;border-radius:16px;padding:1.25rem 1.5rem;max-width:360px;text-align:center;box-shadow:0 12px 36px rgba(0,0,0,.2)}
+  </style>
+<meta content="#2d5246" name="theme-color"/></head>
+<body>
+<header><img alt="Amaranta - Cocina Natural" src="assets/encabezado.png"/></header><section class="card"><form id="form" novalidate="">
+<input id="nombre" name="nombre" type="text"/>
+<div class="error"></div>
+<input id="apellido" name="apellido" type="text"/>
+<div class="error"></div>
+<input id="dni" inputmode="numeric" name="dni" type="text"/>
+<div class="error"></div>
+<input id="codigo" inputmode="numeric" name="codigo" type="text"/>
+<div class="error"></div>
+<input id="numero" inputmode="numeric" name="numero" type="text"/>
+<div class="error"></div>
+<input id="email" name="email" type="email"/>
+<div class="error"></div>
+<input id="direccion" name="direccion" type="text"/>
+<div class="error"></div>
+<textarea id="comentarios" name="comentarios" rows="3"></textarea>
+<div class="error"></div>
+<input id="lista" name="lista" type="hidden" value=""/>
+<button id="btnEnviar" type="submit">Enviar</button>
+</form></section>
+<!-- Modal -->
+<div id="modal"><div id="modal-msg"></div></div>
+<script defer="" src="script.js"></script>
+</body>
+</html>
