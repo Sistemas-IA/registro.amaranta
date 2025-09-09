@@ -98,7 +98,7 @@ export default async function handler(req, res) {
       telefono, sanitize(email),
       sanitize(direccion.slice(0,100)),
       sanitize(comentarios.slice(0,250)),
-      'Z-0','Pendiente',
+      'Z-00','Pendiente',
       sanitize(lista.slice(0,50)),
       new Date().toISOString(), ip
     ];
