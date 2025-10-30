@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<title>Autorregistro</title>
+<script src="https://www.google.com/recaptcha/api.js?render=6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+
+<meta content="#2d5246" name="theme-color"/>
+<style>
+  :root{
+    --green-900:#2d5246;
+    --green-800:#336353;
+    --green-700:#3f745f;
+    --green-500:#6b9781;
+    --green-300:#a8c4b3;
+    --ink:#1e2a26;
+    --error:#c44536;
+    --card-bg: rgba(255,255,255,0.98);
+    --card-border:#dfe7e2;
+    --ring: rgba(63,116,95,.25);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    -webkit-text-size-adjust:100%;
+    font-family:"Poppins",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    font-size:16px; /* evita zoom iOS */
+    color:var(--ink);
+    line-height:1.45;
+    background:
+      linear-gradient(rgba(255,255,255,.9),rgba(255,255,255,.9)),
+      url('assets/fondo.jpg') center/cover no-repeat;
+    padding:12px;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+  }
+  .card{
+    width:90vw;               /* 90% del ancho de pantalla */
+    max-width:560px;          /* no crecer demasiado en desktop */
+    background:var(--card-bg);
+    border:1px solid var(--card-border);
+    border-radius:14px;
+    box-shadow:0 6px 18px rgba(0,0,0,.06);
+    padding:14px;
+  }
+  .form-header{
+    margin:0 0 6px 0;         /* poco espacio con inputs */
+  }
+  .form-header img{
+    display:block;
+    width:100%;               /* ocupa el ancho del contenedor */
+    height:auto;
+    border-radius:10px 10px 0 0;
+  }
+  form{
+    margin:0;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;                  /* menos interlineado entre inputs */
+  }
+  input,textarea,select,button{font-family:inherit}
+  input,textarea,select{
+    width:100%;
+    min-height:44px;          /* tamaño táctil sin exagerar */
+    padding:.65rem .8rem;
+    border:1px solid #cfe0d9;
+    border-radius:10px;
+    background:#fff;
+    font-size:16px;
+    appearance:none;
+    -webkit-appearance:none;
+    transition:border-color .12s ease, box-shadow .12s ease;
+  }
+  textarea{min-height:88px}
+  input::placeholder,textarea::placeholder{color:#8aa295}
+  input:focus,textarea:focus,select:focus{
+    outline:none;
+    border-color:var(--green-700);
+    box-shadow:0 0 0 .22rem var(--ring);
+  }
+  .invalid{border-color:var(--error)!important;box-shadow:0 0 0 .22rem rgba(196,69,54,.15)!important}
+  .error{
+    color:var(--error);
+    font-size:.85rem;
+    min-height:0;
+    margin-top:2px;
+  }
+  .error:empty{display:none} /* sin errores, no ocupa espacio */
+  button{
+    margin-top:2px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:48px;
+    padding:.75rem 1rem;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(180deg,var(--green-700),var(--green-800));
+    color:#fff;
+    font-weight:600;
+    letter-spacing:.02em;
+    cursor:pointer;
+    touch-action:manipulation;
+    box-shadow:0 5px 14px rgba(46,90,77,.2);
+    transition:transform .06s ease, filter .12s ease, box-shadow .12s ease;
+  }
+  button:hover{filter:brightness(1.02)}
+  button:active{transform:translateY(1px)}
+  button[disabled]{opacity:.7;cursor:progress}
+  /* modal compacto */
+  #modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(17,34,29,.45);z-index:9999}
+  #modal div{background:#fff;border-radius:12px;padding:1rem 1.25rem;max-width:340px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+  /* Desktop enhancements */
+  @media (min-width: 768px){
+    body{padding:2rem}
+    .card{padding:18px;max-width:680px}
+    .form-header{margin-bottom:8px}
+    form{gap:10px}
+  }
+</style>
+</head>
+<body>
+<section class="card"><form id="form" novalidate=""><div class="form-header"><img alt="Amaranta - Cocina Natural" decoding="async" loading="lazy" src="assets/encabezado.png"/></div>
+<input id="nombre" name="nombre" type="text"/>
+<div class="error"></div>
+<input id="apellido" name="apellido" type="text"/>
+<div class="error"></div>
+<input id="dni" inputmode="numeric" name="dni" type="text"/>
+<div class="error"></div>
+<input id="telefono" inputmode="numeric" name="telefono" type="text"/>
+<div class="error"></div>
+<input id="email" name="email" type="email"/>
+<div class="error"></div>
+<input id="direccion" name="direccion" type="text"/>
+<div class="error"></div>
+<textarea id="comentarios" name="comentarios" rows="3"></textarea>
+<div class="error"></div>
+<input id="lista" name="lista" type="hidden" value=""/>
+<button id="btnEnviar" type="submit">Enviar</button>
+</form></section>
+<!-- Modal -->
+<div id="modal"><div id="modal-msg"></div></div>
+<script defer="" src="script.js"></script>
+</body>
+</html>
