@@ -14,12 +14,12 @@ const UI_TEXT = {
     required   : 'Este campo es obligatorio',
     nombre     : 'Solo letras y espacios',
     apellido   : 'Solo letras y espacios',
-    dni        : '7‑8 dígitos',
-    codigo     : '2‑4 dígitos',
-    numero     : '6‑9 dígitos',
+    dni        : '7-8 dígitos',
+    codigo     : '2-4 dígitos',
+    numero     : '6-9 dígitos',
     email      : 'Correo inválido',
-    direccion  : 'Máx. 100 caracteres',
-    comentarios: 'Máx. 250 caracteres'
+    direccion  : 'Máx. 100 caracteres',
+    comentarios: 'Máx. 250 caracteres'
   },
   serverError : 'No se pudo procesar el registro',
   captchaFail : 'reCAPTCHA falló, recarga la página'
@@ -33,7 +33,7 @@ const RULES = {
   numero  : v => /^\d{6,9}$/.test(v),
   email   : v => v.length <= 100 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
   direccion  : v => v.length <= 100,
-  comentarios: v => v.length <= 250            // opcional
+  comentarios: v => v.length <= 250 // opcional
 };
 
 /* ---------- ELEMENTOS ---------- */
@@ -65,24 +65,44 @@ form.addEventListener('submit', async e => {
   btn.disabled = true;
 
   try {
-    const token = await grecaptcha.execute('6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp', { action: 'submit' });
+    const token = await grecaptcha.execute(
+      '6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp',
+      { action: 'submit' }
+    );
     if (!token) throw new Error(UI_TEXT.captchaFail);
 
     const payload = Object.fromEntries(new FormData(form).entries());
     payload.recaptchaToken = token;
 
-    const r = await fetch('/api/register', {
+    const resp = await fetch('/api/register', {
       method : 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
       body   : JSON.stringify(payload)
-    }).then(r => r.json());
+    });
 
-    if (!r.ok) throw new Error(r.error || UI_TEXT.serverError);
+    // Parse robusto (evita "Unexpected token ..." si el server responde no-JSON)
+    const ct = (resp.headers.get('content-type') || '').toLowerCase();
+    let data = null;
+
+    if (ct.includes('application/json')) {
+      data = await resp.json();
+    } else {
+      const text = await resp.text();
+      try { data = JSON.parse(text); }
+      catch { data = { ok: false, error: text || UI_TEXT.serverError }; }
+    }
+
+    if (!resp.ok || !data?.ok) {
+      throw new Error(data?.error || UI_TEXT.serverError);
+    }
 
     showModal('¡Registro enviado con éxito!');
     form.reset();
   } catch (err) {
-    showModal(err.message || UI_TEXT.serverError);
+    showModal(err?.message || UI_TEXT.serverError);
   } finally {
     btn.disabled = false;
   }
@@ -91,6 +111,7 @@ form.addEventListener('submit', async e => {
 /* ---------- VALIDACIÓN ---------- */
 function validate() {
   let ok = true;
+
   for (const field of form.elements) {
     if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement)) continue;
     if (field.type === 'hidden') continue;
@@ -98,18 +119,22 @@ function validate() {
     const id  = field.id;
     const val = field.value.trim();
 
+    // requerido (todo menos comentarios)
     if (!val) {
-      if (id !== 'comentarios') {       // comentarios opcional
+      if (id !== 'comentarios') {
         setErr(field, UI_TEXT.errors.required);
         ok = false;
       }
       continue;
     }
+
+    // reglas
     if (RULES[id] && !RULES[id](val)) {
-      setErr(field, UI_TEXT.errors[id]);
+      setErr(field, UI_TEXT.errors[id] || UI_TEXT.errors.required);
       ok = false;
     }
   }
+
   return ok;
 }
 
@@ -118,6 +143,7 @@ function setErr(field, msg) {
   if (e) e.textContent = msg;
   field.classList.add('invalid');
 }
+
 function clearErrors() {
   form.querySelectorAll('.error').forEach(el => el.textContent = '');
   form.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
