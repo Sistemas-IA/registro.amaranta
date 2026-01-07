@@ -1,0 +1,13 @@
+name: Weekly Upstash Ping
+
+on:
+  schedule:
+    - cron: "0 12 * * 1"   # Lunes 12:00 UTC (~ 9:00 Argentina)
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call ping
+        run: curl -fsS "https://registro.amaranta.ar/api/ping" > /dev/null
