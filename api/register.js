@@ -2,12 +2,12 @@
 import { google } from "googleapis";
 import { Redis } from "@upstash/redis";
 import { Ratelimit } from "@upstash/ratelimit";
+import { createHash, randomUUID } from "crypto";
 
 /* =========================
    CONFIG
 ========================= */
 
-// CORS (dejamos solo tu dominio)
 const ALLOWED_ORIGIN = "https://registro.amaranta.ar";
 
 // Sheets
@@ -23,7 +23,7 @@ const RE_NUMERO = /^\d{6,9}$/;
 const RE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RE_LISTA_1_50 = /^(?:[1-9]|[1-4]\d|50)$/;
 
-// Upstash (robusto contra espacios/saltos de línea)
+// Upstash (trim para evitar el bug de espacios/saltos de línea)
 const redis = new Redis({
   url: (process.env.UPSTASH_REDIS_REST_URL || "").trim(),
   token: (process.env.UPSTASH_REDIS_REST_TOKEN || "").trim(),
@@ -68,11 +68,12 @@ class HttpError extends Error {
 }
 
 export default async function handler(req, res) {
-  // CORS básico
+  // CORS básico (solo tu dominio)
   const origin = req.headers.origin;
-  if (!origin || origin === ALLOWED_ORIGIN) {
-    res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
+  if (origin && origin !== ALLOWED_ORIGIN) {
+    return res.status(403).json({ ok: false, error: "Origen no permitido." });
   }
+  res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -82,8 +83,9 @@ export default async function handler(req, res) {
 
   const ip = getClientIp(req);
 
-  // Rate-limit IP
-  const ipLimit = await rlIp.limit(ip);
+  // Rate-limit IP (hashed para no guardar IP en claro)
+  const ipKey = hashKey("ip", ip);
+  const ipLimit = await rlIp.limit(ipKey);
   if (!ipLimit.success) {
     logFail(ip, "Rate-limit IP").catch(() => {});
     return res.status(429).json({ ok: false, error: "Demasiadas peticiones, intenta luego." });
@@ -95,6 +97,10 @@ export default async function handler(req, res) {
     logFail(ip, "Rate-limit global").catch(() => {});
     return res.status(503).json({ ok: false, error: "Servicio saturado, intenta en unos minutos." });
   }
+
+  let reservedKeys = [];
+  const reqId = randomUUID();
+  const pendingVal = `pending:${reqId}`;
 
   try {
     if (!SPREADSHEET_ID) throw new HttpError(500, "Servidor no configurado (SPREADSHEET_ID).");
@@ -112,11 +118,11 @@ export default async function handler(req, res) {
     const lista = sanitize(body?.lista || "");
     const recaptchaToken = body?.recaptchaToken;
 
-    // 1) reCAPTCHA (obligatorio)
+    // 1) reCAPTCHA
     const score = await verifyCaptcha(recaptchaToken, ip);
     if (score < 0.5) throw new HttpError(403, "reCAPTCHA rechazó al usuario.");
 
-    // 2) Validaciones (coherentes con el front)
+    // 2) Validaciones
     if (!nombre) throw new HttpError(400, "Nombre es obligatorio.");
     if (!apellido) throw new HttpError(400, "Apellido es obligatorio.");
     if (!dni) throw new HttpError(400, "DNI es obligatorio.");
@@ -134,44 +140,32 @@ export default async function handler(req, res) {
     if (direccion.length > 100) throw new HttpError(400, "Dirección: máximo 100 caracteres.");
     if (comentarios.length > 250) throw new HttpError(400, "Comentarios: máximo 250 caracteres.");
 
-    // Lista (si viene, que sea 1-50). Si no viene, ok.
     if (lista && !RE_LISTA_1_50.test(lista)) throw new HttpError(400, "Lista inválida (debe ser 1 a 50).");
 
-    // 3) Rate-limit por identidad (DNI o email)
+    // 3) Rate-limit por identidad (hashed)
     const identity = (dni || email || "").toLowerCase();
     if (identity) {
-      const idLimit = await rlId.limit(identity);
+      const idKey = hashKey("id", identity);
+      const idLimit = await rlId.limit(idKey);
       if (!idLimit.success) throw new HttpError(429, "Demasiados intentos con el mismo DNI/email.");
     }
 
-    // 4) Normalización teléfono (como usás en tu sistema)
+    // 4) Normalización
     const telefono = normalizeTel(codigo, numero); // 549 + cod + num
+    const telKey = canonTelKey(telefono);
 
-    // 5) Chequeo duplicados (Etapa 1: leyendo Sheets pero más liviano)
-    //    C = DNI, D = Teléfono, E = Email  (C2:E)
-    const existing = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEET_NAME}!C2:E`,
-    });
+    // 5) DUPLICADOS (Etapa 2): Upstash index (sin leer Sheets)
+    const kDni = idxKey("dni", dni);
+    const kTel = idxKey("tel", telKey);
+    const kEm = idxKey("email", email);
 
-    const rows = existing.data.values || [];
-    const dniK = dni;
-    const telK = canonTelKey(telefono);
-    const emK = (email || "").trim().toLowerCase();
+    // Reservas cortas (10 min) para evitar carreras (dos registros a la vez)
+    // Si alguna reserva falla => duplicado.
+    reservedKeys = await reserveKeysNx([kDni, kTel, kEm], pendingVal, 600);
 
-    const dup = rows.some((r) => {
-      const dniR = digitsOnly(r?.[0]);
-      const telR = canonTelKey(r?.[1]);
-      const emR = String(r?.[2] || "").trim().toLowerCase();
-      return (dniK && dniR && dniK === dniR) || (telK && telR && telK === telR) || (emK && emR && emK === emR);
-    });
-
-    if (dup) throw new HttpError(409, "DNI, teléfono o email ya registrado.");
-
-    // 6) Armar fila (alineada a tus columnas)
+    // 6) Append a Sheets
     const nowIso = new Date().toISOString();
 
-    // Columnas esperadas:
     // A Nombre | B Apellido | C DNI | D Telefono | E Email | F Direccion | G Comentarios
     // H Zona | I Estado | J Lista | K Timestamp | L IP | M Clave | N Grupo | O Contadores
     const fila = [
@@ -187,9 +181,9 @@ export default async function handler(req, res) {
       lista.slice(0, 50),
       nowIso,
       ip,
-      "", // Clave (admin)
-      0,  // Grupo (admin)
-      "", // Contadores (si lo usás después)
+      "", // Clave
+      0,  // Grupo
+      "", // Contadores
     ];
 
     await sheets.spreadsheets.values.append({
@@ -199,15 +193,26 @@ export default async function handler(req, res) {
       requestBody: { values: [fila] },
     });
 
+    // 7) Confirmar índice (sin TTL)
+    const okVal = `ok:${nowIso}`;
+    await Promise.all([
+      redis.set(kDni, okVal),
+      redis.set(kTel, okVal),
+      redis.set(kEm, okVal),
+    ]);
+
     return res.status(200).json({ ok: true });
   } catch (err) {
+    // Si falló después de reservar, liberar (solo si sigue siendo "pending:<reqId>")
+    if (reservedKeys?.length) {
+      await safeReleasePending(reservedKeys, pendingVal).catch(() => {});
+    }
+
     const status = err instanceof HttpError ? err.status : 500;
 
-    // Log en IntentosFallidos (sin romper respuesta si falla)
     const msg = (err?.message || String(err)).slice(0, 200);
     await logFail(ip, msg).catch(() => {});
 
-    // Mensaje al usuario (no demasiado técnico)
     const publicMsg =
       status === 500 ? "Error interno. Intentá de nuevo en unos minutos." : (err?.message || "Error");
 
@@ -216,7 +221,47 @@ export default async function handler(req, res) {
 }
 
 /* =========================
-   HELPERS
+   DUPLICADOS: INDEX HELPERS
+========================= */
+
+function idxKey(kind, value) {
+  // No guardamos el valor en claro: lo hasheamos
+  const h = hashKey(kind, value);
+  return `idx:v1:${kind}:${h}`;
+}
+
+function hashKey(kind, value) {
+  return createHash("sha256")
+    .update(`${kind}:${String(value || "").trim().toLowerCase()}`)
+    .digest("hex");
+}
+
+async function reserveKeysNx(keys, value, ttlSeconds) {
+  const okKeys = [];
+  for (const k of keys) {
+    // SET key value NX EX ttl
+    const r = await redis.set(k, value, { nx: true, ex: ttlSeconds });
+    if (r !== "OK") {
+      // duplicado: deshacer reservas previas
+      await safeReleasePending(okKeys, value).catch(() => {});
+      throw new HttpError(409, "DNI, teléfono o email ya registrado.");
+    }
+    okKeys.push(k);
+  }
+  return okKeys;
+}
+
+async function safeReleasePending(keys, pendingVal) {
+  for (const k of keys) {
+    const cur = await redis.get(k);
+    if (cur === pendingVal) {
+      await redis.del(k);
+    }
+  }
+}
+
+/* =========================
+   HELPERS GENERALES
 ========================= */
 
 function getClientIp(req) {
@@ -226,7 +271,6 @@ function getClientIp(req) {
 }
 
 async function readJsonBody(req) {
-  // Vercel suele parsear req.body, pero lo hacemos robusto
   if (req.body && typeof req.body === "object") return req.body;
   if (typeof req.body === "string") {
     try { return JSON.parse(req.body); } catch { return {}; }
@@ -274,12 +318,11 @@ function canonTelKey(s) {
   return d.startsWith("549") ? d : "549" + d;
 }
 
-// evita fórmulas en Sheets y limpia basura básica
 function sanitize(v = "") {
   const s = String(v ?? "").trim().replace(/\s+/g, " ");
   return s
-    .replace(/^[=+\-@]/, "'$&") // formula injection
-    .replace(/[<>]/g, "");      // básico
+    .replace(/^[=+\-@]/, "'$&")
+    .replace(/[<>]/g, "");
 }
 
 function safeJsonParse(raw) {
@@ -301,6 +344,6 @@ async function logFail(ip, msg) {
       requestBody: { values: [[new Date().toISOString(), ip, String(msg || "").slice(0, 200)]] },
     });
   } catch {
-    // silencio: nunca romper por logging
+    // nunca romper por logging
   }
 }
