@@ -118,6 +118,15 @@
   /* modal compacto */
   #modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(17,34,29,.45);z-index:9999}
   #modal div{background:#fff;border-radius:12px;padding:1rem 1.25rem;max-width:340px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+
+  /* Honeypot: fuera de pantalla (bots lo ven; humanos no) */
+  .hp-wrap{
+    position:absolute;
+    left:-9999px;
+    width:1px;height:1px;
+    overflow:hidden;
+  }
+
   /* Desktop enhancements */
   @media (min-width: 768px){
     body{padding:2rem}
@@ -128,26 +137,39 @@
 </style>
 </head>
 <body>
-<section class="card"><form id="form" novalidate=""><div class="form-header"><img alt="Amaranta - Cocina Natural" decoding="async" loading="lazy" src="assets/encabezado.png"/></div>
-<input id="nombre" name="nombre" type="text"/>
-<div class="error"></div>
-<input id="apellido" name="apellido" type="text"/>
-<div class="error"></div>
-<input id="dni" inputmode="numeric" name="dni" type="text"/>
-<div class="error"></div>
-<input id="codigo" inputmode="numeric" name="codigo" type="text"/>
-<div class="error"></div>
-<input id="numero" inputmode="numeric" name="numero" type="text"/>
-<div class="error"></div>
-<input id="email" name="email" type="email"/>
-<div class="error"></div>
-<input id="direccion" name="direccion" type="text"/>
-<div class="error"></div>
-<textarea id="comentarios" name="comentarios" rows="3"></textarea>
-<div class="error"></div>
-<input id="lista" name="lista" type="hidden" value=""/>
-<button id="btnEnviar" type="submit">Enviar</button>
-</form></section>
+<section class="card">
+  <form id="form" novalidate="">
+    <div class="form-header">
+      <img alt="Amaranta - Cocina Natural" decoding="async" loading="lazy" src="assets/encabezado.png"/>
+    </div>
+
+    <!-- Honeypot (anti-bots): debe quedar vacío -->
+    <div class="hp-wrap" aria-hidden="true">
+      <label for="website">Website</label>
+      <input id="website" name="website" type="text" autocomplete="off" tabindex="-1"/>
+    </div>
+
+    <input id="nombre" name="nombre" type="text"/>
+    <div class="error"></div>
+    <input id="apellido" name="apellido" type="text"/>
+    <div class="error"></div>
+    <input id="dni" inputmode="numeric" name="dni" type="text"/>
+    <div class="error"></div>
+    <input id="codigo" inputmode="numeric" name="codigo" type="text"/>
+    <div class="error"></div>
+    <input id="numero" inputmode="numeric" name="numero" type="text"/>
+    <div class="error"></div>
+    <input id="email" name="email" type="email"/>
+    <div class="error"></div>
+    <input id="direccion" name="direccion" type="text"/>
+    <div class="error"></div>
+    <textarea id="comentarios" name="comentarios" rows="3"></textarea>
+    <div class="error"></div>
+    <input id="lista" name="lista" type="hidden" value=""/>
+    <button id="btnEnviar" type="submit">Enviar</button>
+  </form>
+</section>
+
 <!-- Modal -->
 <div id="modal"><div id="modal-msg"></div></div>
 <script defer="" src="script.js"></script>
