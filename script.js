@@ -76,28 +76,21 @@ form.addEventListener('submit', async e => {
 
     const resp = await fetch('/api/register', {
       method : 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body   : JSON.stringify(payload)
     });
 
-    // Parse robusto (evita "Unexpected token ..." si el server responde no-JSON)
     const ct = (resp.headers.get('content-type') || '').toLowerCase();
     let data = null;
 
-    if (ct.includes('application/json')) {
-      data = await resp.json();
-    } else {
+    if (ct.includes('application/json')) data = await resp.json();
+    else {
       const text = await resp.text();
       try { data = JSON.parse(text); }
       catch { data = { ok: false, error: text || UI_TEXT.serverError }; }
     }
 
-    if (!resp.ok || !data?.ok) {
-      throw new Error(data?.error || UI_TEXT.serverError);
-    }
+    if (!resp.ok || !data?.ok) throw new Error(data?.error || UI_TEXT.serverError);
 
     showModal('¡Registro enviado con éxito!');
     form.reset();
@@ -116,10 +109,12 @@ function validate() {
     if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement)) continue;
     if (field.type === 'hidden') continue;
 
+    // Honeypot: NO se valida (tiene que quedar invisible y opcional para humanos)
+    if (field.id === 'website') continue;
+
     const id  = field.id;
     const val = field.value.trim();
 
-    // requerido (todo menos comentarios)
     if (!val) {
       if (id !== 'comentarios') {
         setErr(field, UI_TEXT.errors.required);
@@ -128,7 +123,6 @@ function validate() {
       continue;
     }
 
-    // reglas
     if (RULES[id] && !RULES[id](val)) {
       setErr(field, UI_TEXT.errors[id] || UI_TEXT.errors.required);
       ok = false;
