@@ -9,6 +9,8 @@ import { createHash, randomUUID } from "crypto";
 ========================= */
 
 const ALLOWED_ORIGIN = "https://registro.amaranta.ar";
+const EXPECTED_HOSTNAME = "registro.amaranta.ar";
+const EXPECTED_ACTION = "submit";
 
 // Sheets
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
@@ -23,7 +25,7 @@ const RE_NUMERO = /^\d{6,9}$/;
 const RE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RE_LISTA_1_50 = /^(?:[1-9]|[1-4]\d|50)$/;
 
-// Upstash (trim para evitar el bug de espacios/saltos de línea)
+// Upstash (trim para evitar bug de espacios/saltos de línea)
 const redis = new Redis({
   url: (process.env.UPSTASH_REDIS_REST_URL || "").trim(),
   token: (process.env.UPSTASH_REDIS_REST_TOKEN || "").trim(),
@@ -83,7 +85,7 @@ export default async function handler(req, res) {
 
   const ip = getClientIp(req);
 
-  // Rate-limit IP (hashed para no guardar IP en claro)
+  // Rate-limit IP (hashed para no guardar IP en claro en Redis)
   const ipKey = hashKey("ip", ip);
   const ipLimit = await rlIp.limit(ipKey);
   if (!ipLimit.success) {
@@ -107,6 +109,13 @@ export default async function handler(req, res) {
 
     const body = await readJsonBody(req);
 
+    // Honeypot: si viene lleno -> no guardamos nada y respondemos OK (no le damos pista al bot)
+    const website = String(body?.website || "").trim();
+    if (website) {
+      logFail(ip, "Honeypot").catch(() => {});
+      return res.status(200).json({ ok: true });
+    }
+
     const nombre = sanitize(body?.nombre);
     const apellido = sanitize(body?.apellido);
     const dni = digitsOnly(body?.dni);
@@ -118,11 +127,14 @@ export default async function handler(req, res) {
     const lista = sanitize(body?.lista || "");
     const recaptchaToken = body?.recaptchaToken;
 
-    // 1) reCAPTCHA
-    const score = await verifyCaptcha(recaptchaToken, ip);
-    if (score < 0.5) throw new HttpError(403, "reCAPTCHA rechazó al usuario.");
+    // reCAPTCHA (score + action + hostname)
+    const cap = await verifyCaptcha(recaptchaToken, ip);
+    if (!cap.success) throw new HttpError(403, "reCAPTCHA inválido.");
+    if (cap.score < 0.5) throw new HttpError(403, "reCAPTCHA rechazó al usuario.");
+    if (cap.action !== EXPECTED_ACTION) throw new HttpError(403, "reCAPTCHA action inválida.");
+    if (cap.hostname !== EXPECTED_HOSTNAME) throw new HttpError(403, "reCAPTCHA hostname inválido.");
 
-    // 2) Validaciones
+    // Validaciones
     if (!nombre) throw new HttpError(400, "Nombre es obligatorio.");
     if (!apellido) throw new HttpError(400, "Apellido es obligatorio.");
     if (!dni) throw new HttpError(400, "DNI es obligatorio.");
@@ -139,10 +151,9 @@ export default async function handler(req, res) {
     if (email.length > 100 || !RE_EMAIL.test(email)) throw new HttpError(400, "Email inválido.");
     if (direccion.length > 100) throw new HttpError(400, "Dirección: máximo 100 caracteres.");
     if (comentarios.length > 250) throw new HttpError(400, "Comentarios: máximo 250 caracteres.");
-
     if (lista && !RE_LISTA_1_50.test(lista)) throw new HttpError(400, "Lista inválida (debe ser 1 a 50).");
 
-    // 3) Rate-limit por identidad (hashed)
+    // Rate-limit por identidad (hashed)
     const identity = (dni || email || "").toLowerCase();
     if (identity) {
       const idKey = hashKey("id", identity);
@@ -150,24 +161,21 @@ export default async function handler(req, res) {
       if (!idLimit.success) throw new HttpError(429, "Demasiados intentos con el mismo DNI/email.");
     }
 
-    // 4) Normalización
-    const telefono = normalizeTel(codigo, numero); // 549 + cod + num
+    // Normalización teléfono (tu formato)
+    const telefono = normalizeTel(codigo, numero);
     const telKey = canonTelKey(telefono);
 
-    // 5) DUPLICADOS (Etapa 2): Upstash index (sin leer Sheets)
+    // Duplicados por Upstash index (sin leer Sheets)
     const kDni = idxKey("dni", dni);
     const kTel = idxKey("tel", telKey);
     const kEm = idxKey("email", email);
 
-    // Reservas cortas (10 min) para evitar carreras (dos registros a la vez)
-    // Si alguna reserva falla => duplicado.
+    // Reservas cortas (10 min) para evitar carreras
     reservedKeys = await reserveKeysNx([kDni, kTel, kEm], pendingVal, 600);
 
-    // 6) Append a Sheets
+    // Append a Sheets
     const nowIso = new Date().toISOString();
 
-    // A Nombre | B Apellido | C DNI | D Telefono | E Email | F Direccion | G Comentarios
-    // H Zona | I Estado | J Lista | K Timestamp | L IP | M Clave | N Grupo | O Contadores
     const fila = [
       nombre,
       apellido,
@@ -193,7 +201,7 @@ export default async function handler(req, res) {
       requestBody: { values: [fila] },
     });
 
-    // 7) Confirmar índice (sin TTL)
+    // Confirmar índice (sin TTL)
     const okVal = `ok:${nowIso}`;
     await Promise.all([
       redis.set(kDni, okVal),
@@ -203,7 +211,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ ok: true });
   } catch (err) {
-    // Si falló después de reservar, liberar (solo si sigue siendo "pending:<reqId>")
+    // Si falló después de reservar, liberar si sigue "pending"
     if (reservedKeys?.length) {
       await safeReleasePending(reservedKeys, pendingVal).catch(() => {});
     }
@@ -225,7 +233,6 @@ export default async function handler(req, res) {
 ========================= */
 
 function idxKey(kind, value) {
-  // No guardamos el valor en claro: lo hasheamos
   const h = hashKey(kind, value);
   return `idx:v1:${kind}:${h}`;
 }
@@ -239,10 +246,8 @@ function hashKey(kind, value) {
 async function reserveKeysNx(keys, value, ttlSeconds) {
   const okKeys = [];
   for (const k of keys) {
-    // SET key value NX EX ttl
     const r = await redis.set(k, value, { nx: true, ex: ttlSeconds });
     if (r !== "OK") {
-      // duplicado: deshacer reservas previas
       await safeReleasePending(okKeys, value).catch(() => {});
       throw new HttpError(409, "DNI, teléfono o email ya registrado.");
     }
@@ -254,9 +259,7 @@ async function reserveKeysNx(keys, value, ttlSeconds) {
 async function safeReleasePending(keys, pendingVal) {
   for (const k of keys) {
     const cur = await redis.get(k);
-    if (cur === pendingVal) {
-      await redis.del(k);
-    }
+    if (cur === pendingVal) await redis.del(k);
   }
 }
 
@@ -287,7 +290,7 @@ async function readJsonBody(req) {
 }
 
 async function verifyCaptcha(token, ip) {
-  if (!token) return 0;
+  if (!token) return { success: false, score: 0, hostname: "", action: "" };
 
   const params = new URLSearchParams({
     secret: process.env.RECAPTCHA_SECRET || "",
@@ -300,8 +303,14 @@ async function verifyCaptcha(token, ip) {
     body: params,
   }).then((r) => r.json()).catch(() => null);
 
-  if (!out || out.success !== true) return 0;
-  return Number(out.score || 0);
+  if (!out) return { success: false, score: 0, hostname: "", action: "" };
+
+  return {
+    success: out.success === true,
+    score: Number(out.score || 0),
+    hostname: String(out.hostname || ""),
+    action: String(out.action || ""),
+  };
 }
 
 function normalizeTel(c = "", n = "") {
@@ -343,7 +352,5 @@ async function logFail(ip, msg) {
       valueInputOption: "RAW",
       requestBody: { values: [[new Date().toISOString(), ip, String(msg || "").slice(0, 200)]] },
     });
-  } catch {
-    // nunca romper por logging
-  }
+  } catch {}
 }
