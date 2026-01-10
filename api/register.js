@@ -34,19 +34,23 @@ function makeLimiter(prefix, limit, window) {
   });
 }
 
-/* 5 envíos / IP / 5 min */
+// IP: 5 envíos / 5 min
 const rlIp = makeLimiter("ip", 5, "5 m");
-/* 2 envíos / DNI o email / 1 h */
-const rlId = makeLimiter("id", 2, "1 h");
-/* 100 envíos globales / 5 min */
+// DNI: 3 envíos / 1 h
+const rlDni = makeLimiter("dni", 3, "1 h");
+// Email: 3 envíos / 1 h
+const rlEmail = makeLimiter("email", 3, "1 h");
+// Tel: 3 envíos / 1 h
+const rlTel = makeLimiter("tel", 3, "1 h");
+// Global: 100 envíos / 5 min
 const rlGlobal = makeLimiter("glob", 100, "5 m");
 
 async function limitOrPass(limiter, key) {
   if (!limiter) return { success: true };
   try {
-    return await limiter.limit(key);
+    return await limiter.limit(String(key || ""));
   } catch {
-    // Fail-open: no frenamos el registro si Upstash falla
+    // Fail-open
     return { success: true };
   }
 }
@@ -54,10 +58,6 @@ async function limitOrPass(limiter, key) {
 /* =========================
    2) GOOGLE SHEETS
 ========================= */
-if (!SPREADSHEET_ID) {
-  console.warn("SPREADSHEET_ID faltante");
-}
-
 const auth = new google.auth.GoogleAuth({
   credentials: safeJsonParse(process.env.GOOGLE_SERVICE_ACCOUNT),
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
@@ -78,7 +78,7 @@ const RE_LISTA_1_50 = /^(?:[1-9]|[1-4]\d|50)$/;
    4) HANDLER
 ========================= */
 export default async function handler(req, res) {
-  // CORS básico + preflight
+  // CORS + preflight
   res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -92,26 +92,29 @@ export default async function handler(req, res) {
     req.socket?.remoteAddress ||
     "unknown";
 
-  // 4.1 Rate limits (Upstash)
-  if (!(await limitOrPass(rlIp, ip)).success) {
-    await logFail(ip, "Rate-limit IP");
-    return res.status(429).json({ ok: false, error: "Demasiadas peticiones, intenta luego." });
-  }
+  // Global + IP rate limit (Upstash)
   if (!(await limitOrPass(rlGlobal, "global")).success) {
-    await logFail(ip, "Rate-limit global");
-    return res
-      .status(503)
-      .json({ ok: false, error: "Servicio saturado, intenta nuevamente en unos minutos." });
+    await logFail({ ip, motivo: "Rate-limit global" });
+    return res.status(503).json({ ok: false, error: "Servicio saturado, intentá en unos minutos." });
   }
+  if (!(await limitOrPass(rlIp, ip)).success) {
+    await logFail({ ip, motivo: "Rate-limit IP" });
+    return res.status(429).json({ ok: false, error: "Demasiadas peticiones, intentá luego." });
+  }
+
+  let ctx = { ip, dni: "", telefono: "", email: "" };
 
   try {
     const body = req.body || {};
 
-    // Honeypot (campo oculto): si viene completo => bot
+    // Honeypot
     const website = str(body.website);
-    if (website) throw httpError(400, "Solicitud rechazada.");
+    if (website) {
+      ctx.motivo = "Honeypot";
+      throw httpError(400, "Solicitud rechazada.");
+    }
 
-    // Campos
+    // Campos base (antes de normalizar)
     const nombre = str(body.nombre);
     const apellido = str(body.apellido);
     const dni = digits(body.dni);
@@ -121,10 +124,14 @@ export default async function handler(req, res) {
 
     const direccion = str(body.direccion);
     const comentarios = str(body.comentarios);
-    const lista = str(body.lista); // reservado (si viene, validamos 1..50)
+    const lista = str(body.lista);
     const recaptchaToken = str(body.recaptchaToken);
 
-    // 4.2 Validación requerida
+    // Contexto de log (ya con datos)
+    ctx.dni = dni;
+    ctx.email = email;
+
+    // Required
     if (!nombre) throw httpError(400, "Nombre es obligatorio.");
     if (!apellido) throw httpError(400, "Apellido es obligatorio.");
     if (!dni) throw httpError(400, "DNI es obligatorio.");
@@ -133,7 +140,7 @@ export default async function handler(req, res) {
     if (!email) throw httpError(400, "Email es obligatorio.");
     if (!direccion) throw httpError(400, "Dirección es obligatoria.");
 
-    // 4.3 Validación formato
+    // Format
     if (!RE_NAME.test(nombre)) throw httpError(400, "Nombre inválido.");
     if (!RE_NAME.test(apellido)) throw httpError(400, "Apellido inválido.");
     if (!RE_DNI.test(dni)) throw httpError(400, "DNI inválido.");
@@ -144,19 +151,32 @@ export default async function handler(req, res) {
     if (comentarios.length > 250) throw httpError(400, "Comentarios demasiado largos (máx 250).");
     if (lista && !RE_LISTA_1_50.test(lista)) throw httpError(400, "Lista inválida (1 a 50).");
 
-    // 4.4 reCAPTCHA v3
-    const score = await verifyCaptcha(recaptchaToken, ip);
-    if (score < 0.5) throw httpError(400, "reCAPTCHA rechazó la solicitud.");
+    // Tel normalizado
+    const telefono = canonTel("549" + codigo + numero);
+    ctx.telefono = telefono;
 
-    // 4.5 Rate-limit por identidad (DNI o email)
-    const identity = dni || email;
-    if (identity && !(await limitOrPass(rlId, identity)).success) {
-      throw httpError(429, "Demasiados intentos con el mismo DNI/email.");
+    // Rate-limit por identidad (separados)
+    if (dni && !(await limitOrPass(rlDni, dni)).success) {
+      ctx.motivo = "Rate-limit DNI";
+      throw httpError(429, "Demasiados intentos con ese DNI. Probá más tarde.");
+    }
+    if (email && !(await limitOrPass(rlEmail, email)).success) {
+      ctx.motivo = "Rate-limit Email";
+      throw httpError(429, "Demasiados intentos con ese email. Probá más tarde.");
+    }
+    if (telefono && !(await limitOrPass(rlTel, telefono)).success) {
+      ctx.motivo = "Rate-limit Tel";
+      throw httpError(429, "Demasiados intentos con ese celular. Probá más tarde.");
     }
 
-    // 4.6 Normalización + Sanitización
-    const telefono = canonTel("549" + codigo + numero);
+    // reCAPTCHA v3
+    const score = await verifyCaptcha(recaptchaToken, ip);
+    if (score < 0.5) {
+      ctx.motivo = `reCAPTCHA score=${score}`;
+      throw httpError(400, "reCAPTCHA rechazó la solicitud.");
+    }
 
+    // Sanitización (Sheets-safe)
     const safeNombre = sanitize(nombre);
     const safeApellido = sanitize(apellido);
     const safeDni = sanitize(dni);
@@ -165,8 +185,7 @@ export default async function handler(req, res) {
     const safeComentarios = sanitize(comentarios.slice(0, 250));
     const safeLista = sanitize(lista.slice(0, 50));
 
-    // 4.7 Chequeo duplicados en Sheets (OPCIÓN 1)
-    // Leemos solo columnas C:D:E (DNI / Teléfono / Email) para ahorrar.
+    // Duplicados en Sheets (C:D:E = DNI/Tel/Email)
     const existing = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${SHEET_NAME}!C2:E`,
@@ -177,38 +196,59 @@ export default async function handler(req, res) {
     const telKey = canonTel(telefono);
     const emKey = canonEmail(safeEmail);
 
+    let dupDni = false;
+    let dupTel = false;
+    let dupEmail = false;
+
     for (const r of rows) {
       const rDni = canonDni(r?.[0]);
       const rTel = canonTel(r?.[1]);
       const rEm = canonEmail(r?.[2]);
 
-      if ((dniKey && rDni && dniKey === rDni) || (telKey && rTel && telKey === rTel) || (emKey && rEm && emKey === rEm)) {
-        throw httpError(409, "Ya existe un cliente con ese DNI, teléfono o email.");
-      }
+      if (dniKey && rDni && dniKey === rDni) dupDni = true;
+      if (telKey && rTel && telKey === rTel) dupTel = true;
+      if (emKey && rEm && emKey === rEm) dupEmail = true;
+
+      if (dupDni || dupTel || dupEmail) break;
     }
 
-    // 4.8 Generar clave (LLNNLL) — NO forzamos unicidad (como pediste)
+    if (dupDni || dupTel || dupEmail) {
+      const types = [];
+      if (dupDni) types.push("DNI");
+      if (dupEmail) types.push("Email");
+      if (dupTel) types.push("Celular");
+
+      const msg =
+        types.length === 1
+          ? `Ya existe un cliente con ese ${types[0]}.`
+          : `Ya existe un cliente con esos datos: ${types.join(", ")}.`;
+
+      const e = httpError(409, msg);
+      e.duplicateTypes = types;
+      ctx.motivo = `Duplicado: ${types.join(",")}`;
+      throw e;
+    }
+
+    // Clave LLNNLL (sin unicidad forzada)
     const clave = generateClave();
 
-    // 4.9 Append fila (alineado a tus columnas)
-    // Nombre, Apellido, DNI, Telefono, Email, Direccion, Comentarios,
-    // Zona, Estado, Lista, Timestamp, IP, Clave, Grupo, Contadores
+    // Append A:O (15 cols)
     const fila = [
-      safeNombre,
-      safeApellido,
-      safeDni,
-      telefono,
-      safeEmail,
-      safeDireccion,
-      safeComentarios,
-      "Z-00",
-      "Pendiente",
-      safeLista,
-      new Date().toISOString(),
-      ip,
-      clave,
-      0,
-      "",
+      safeNombre,              // A Nombre
+      safeApellido,            // B Apellido
+      safeDni,                 // C DNI
+      telefono,                // D Telefono
+      safeEmail,               // E Email
+      safeDireccion,           // F Direccion
+      safeComentarios,         // G Comentarios
+      "Z-00",                  // H Zona
+      "Pendiente",             // I Estado
+      safeLista,               // J Lista
+      new Date().toISOString(),// K Timestamp
+      ip,                      // L IP
+      clave,                   // M Clave
+      0,                       // N Grupo
+      "",                      // O Contadores
     ];
 
     await sheets.spreadsheets.values.append({
@@ -224,9 +264,19 @@ export default async function handler(req, res) {
     const status = Number(err?.status) || 400;
     const msg = err?.message || "Error interno";
 
-    await logFail(ip, msg);
+    await logFail({
+      ip: ctx.ip || ip,
+      dni: ctx.dni || "",
+      telefono: ctx.telefono || "",
+      email: ctx.email || "",
+      motivo: ctx.motivo ? `${ctx.motivo} | ${msg}` : msg,
+    });
 
-    return res.status(status).json({ ok: false, error: msg });
+    // si es duplicado, devolvemos también types
+    const payload = { ok: false, error: msg };
+    if (Array.isArray(err?.duplicateTypes)) payload.duplicateTypes = err.duplicateTypes;
+
+    return res.status(status).json(payload);
   }
 }
 
@@ -286,7 +336,7 @@ function generateClave() {
 }
 
 async function verifyCaptcha(token, ip) {
-  if (!RECAPTCHA_SECRET) return 0; // si faltara, se rechaza por score < 0.5
+  if (!RECAPTCHA_SECRET) return 0;
   if (!token) return 0;
 
   const params = new URLSearchParams({
@@ -300,22 +350,20 @@ async function verifyCaptcha(token, ip) {
     body: params,
   }).then((x) => x.json());
 
-  // opcional: exigir success
   if (!r?.success) return 0;
-
-  // opcional: si querés, podés exigir action === 'submit' (si alguna vez te rompe, lo sacás)
-  // if (r?.action && r.action !== "submit") return 0;
-
   return Number(r?.score || 0);
 }
 
-async function logFail(ip, msg) {
+// IntentosFallidos: Timestamp | IP | DNI | Telefono | Email | Motivo
+async function logFail({ ip = "", dni = "", telefono = "", email = "", motivo = "" }) {
   try {
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${FAIL_SHEET}!A:C`,
+      range: `${FAIL_SHEET}!A:F`,
       valueInputOption: "RAW",
-      requestBody: { values: [[new Date().toISOString(), ip, String(msg).slice(0, 200)]] },
+      requestBody: {
+        values: [[new Date().toISOString(), ip, String(dni), String(telefono), String(email), String(motivo).slice(0, 200)]],
+      },
     });
   } catch {
     // no-op
