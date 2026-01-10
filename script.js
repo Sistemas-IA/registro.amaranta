@@ -6,9 +6,9 @@ const UI_TEXT = {
     dni: "🪪 DNI (sin puntos)",
     codigo: "📞 Cod. área (sin 0)",
     numero: "📞 Número de celular (sin 15)",
-    email: "✉ Correo electrónico",
+    email: "📧 Correo electrónico",
     direccion: "📍 Dirección para la entrega de tu vianda",
-    comentarios: "📝 [OPCIONAL] Comentarios adicionales sobre la dirección de entrega",
+    comentarios: "✏️ [OPCIONAL] Comentarios adicionales sobre la dirección de entrega",
   },
   errors: {
     required: "Este campo es obligatorio",
