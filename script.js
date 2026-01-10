@@ -6,9 +6,9 @@ const UI_TEXT = {
     dni: "🪪 DNI (sin puntos)",
     codigo: "📞 Cod. área (sin 0)",
     numero: "📞 Número de celular (sin 15)",
-    email: "📧 Correo electrónico",
+    email: "✉ Correo electrónico",
     direccion: "📍 Dirección para la entrega de tu vianda",
-    comentarios: "✏️ [OPCIONAL] Comentarios adicionales sobre la dirección de entrega",
+    comentarios: "📝 [OPCIONAL] Comentarios adicionales sobre la dirección de entrega",
   },
   errors: {
     required: "Este campo es obligatorio",
@@ -39,14 +39,16 @@ const RULES = {
 /* ---------- ELEMENTOS ---------- */
 const form = document.getElementById("form");
 
-// Modal nuevo
+// Modal
 const modal = document.getElementById("modal");
 const modalTitle = document.getElementById("modal-title");
+const modalSub = document.getElementById("modal-sub");
 const modalClave = document.getElementById("modal-clave");
-const modalSave = document.getElementById("modal-save");
+const modalBtn = document.getElementById("modal-save");
 const modalX = document.getElementById("modal-x");
 
 let lastClave = "";
+let modalMode = "error"; // 'success' | 'error'
 
 /* placeholders */
 for (const [id, t] of Object.entries(UI_TEXT.placeholders)) {
@@ -54,12 +56,9 @@ for (const [id, t] of Object.entries(UI_TEXT.placeholders)) {
   if (el) el.placeholder = t;
 }
 
-/* lista desde ?l= (campo reservado) */
+/* lista desde ?l= */
 document.getElementById("lista").value =
   new URLSearchParams(location.search).get("l") || "";
-
-/* desactiva validación HTML */
-form.noValidate = true;
 
 /* ---------- SUBMIT ---------- */
 form.addEventListener("submit", async (e) => {
@@ -89,14 +88,16 @@ form.addEventListener("submit", async (e) => {
 
     const data = await resp.json().catch(() => ({}));
 
-    if (!data.ok) throw new Error(data.error || UI_TEXT.serverError);
+    if (!data.ok) {
+      const msg = buildNiceError(data);
+      throw new Error(msg || UI_TEXT.serverError);
+    }
 
     // OK
     lastClave = String(data.clave || "").trim();
     showSuccessModal(lastClave);
 
     form.reset();
-    // volver a poner lista desde URL (si había)
     document.getElementById("lista").value =
       new URLSearchParams(location.search).get("l") || "";
   } catch (err) {
@@ -106,6 +107,19 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
+function buildNiceError(data) {
+  // Si el server manda duplicateTypes, armamos un mensaje clarito
+  if (Array.isArray(data.duplicateTypes) && data.duplicateTypes.length) {
+    const map = { DNI: "DNI", Email: "email", Celular: "celular" };
+    const list = data.duplicateTypes.map((t) => map[t] || t).join(", ");
+    if (data.duplicateTypes.length === 1) {
+      return `Ese ${list} ya está registrado.`;
+    }
+    return `Esos datos ya están registrados: ${list}.`;
+  }
+  return data.error || "";
+}
+
 /* ---------- VALIDACIÓN ---------- */
 function validate() {
   let ok = true;
@@ -114,7 +128,6 @@ function validate() {
     if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement))
       continue;
 
-    // No validamos hidden, ni honeypot
     if (field.type === "hidden") continue;
     if (field.id === "website") continue;
 
@@ -122,7 +135,6 @@ function validate() {
     const val = field.value.trim();
 
     if (!val) {
-      // comentarios opcional
       if (id !== "comentarios") {
         setErr(field, UI_TEXT.errors.required);
         ok = false;
@@ -152,15 +164,30 @@ function clearErrors() {
 
 /* ---------- MODAL ---------- */
 function showSuccessModal(clave) {
+  modalMode = "success";
   modalTitle.textContent = "¡Registro enviado!";
+  modalSub.textContent = "Guardá tu clave: la vas a usar junto con tu DNI.";
+  modalSub.style.display = "";
   modalClave.textContent = clave || "—";
+  modalClave.style.display = "";
+  modalBtn.textContent = "Guardar clave y cerrar";
+  modalBtn.style.display = "";
+
   modal.style.display = "flex";
   modal.setAttribute("aria-hidden", "false");
 }
 
 function showErrorModal(msg) {
-  modalTitle.textContent = msg || UI_TEXT.serverError;
+  modalMode = "error";
+  modalTitle.textContent = "No se pudo registrar";
+  modalSub.textContent = msg || UI_TEXT.serverError;
+  modalSub.style.display = "";
   modalClave.textContent = "";
+  modalClave.style.display = "none";
+  modalBtn.textContent = "Cerrar";
+  modalBtn.style.display = "";
+
+  lastClave = "";
   modal.style.display = "flex";
   modal.setAttribute("aria-hidden", "false");
 }
@@ -169,37 +196,36 @@ function closeModal() {
   modal.style.display = "none";
   modal.setAttribute("aria-hidden", "true");
   lastClave = "";
+  modalMode = "error";
 }
 
-/* X con fricción mínima:
-   - intenta copiar la clave (si existe)
+/* X: mínima fricción.
+   - si es success y hay clave: intenta copiar (best-effort)
    - cierra
 */
 modalX.addEventListener("click", async () => {
-  if (lastClave) {
+  if (modalMode === "success" && lastClave) {
     await tryCopy(lastClave);
   }
   closeModal();
 });
 
-/* Botón único: Guardar clave y cerrar
-   - copia a portapapeles (best effort)
-   - descarga una imagen simple con la clave
-   - cierra
+/* Botón:
+   - success: copia + baja imagen + cierra
+   - error: cierra
 */
-modalSave.addEventListener("click", async () => {
-  const clave = lastClave || "";
-  if (clave) {
-    await tryCopy(clave);
-    downloadClaveImage(clave);
+modalBtn.addEventListener("click", async () => {
+  if (modalMode === "success" && lastClave) {
+    await tryCopy(lastClave);
+    downloadClaveImage(lastClave);
   }
   closeModal();
 });
 
-// clic fuera del card también cierra (y copia best-effort si hay clave)
+// clic fuera del card cierra (y copia si success)
 modal.addEventListener("click", async (e) => {
   if (e.target === modal) {
-    if (lastClave) await tryCopy(lastClave);
+    if (modalMode === "success" && lastClave) await tryCopy(lastClave);
     closeModal();
   }
 });
@@ -213,9 +239,7 @@ async function tryCopy(text) {
   }
 }
 
-/* Genera un PNG liviano con Canvas (sin libs)
-   Nota: en iPhone descarga a "Archivos".
-*/
+/* PNG liviano */
 function downloadClaveImage(clave) {
   const w = 1080;
   const h = 1080;
@@ -226,26 +250,21 @@ function downloadClaveImage(clave) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
-  // Fondo claro
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, w, h);
 
-  // Marco suave
   ctx.strokeStyle = "rgba(63,116,95,.25)";
   ctx.lineWidth = 12;
   ctx.strokeRect(60, 60, w - 120, h - 120);
 
-  // Título
   ctx.fillStyle = "#2d5246";
   ctx.font = "700 64px Poppins, system-ui, -apple-system, Segoe UI, Roboto, Arial";
   ctx.fillText("AMARANTA", 120, 220);
 
-  // Subtítulo
   ctx.fillStyle = "#1e2a26";
   ctx.font = "500 42px Poppins, system-ui, -apple-system, Segoe UI, Roboto, Arial";
   ctx.fillText("Tu clave de acceso", 120, 310);
 
-  // Caja clave
   ctx.fillStyle = "rgba(63,116,95,.08)";
   roundRect(ctx, 120, 420, w - 240, 220, 28);
   ctx.fill();
@@ -256,14 +275,12 @@ function downloadClaveImage(clave) {
   ctx.textBaseline = "middle";
   ctx.fillText(clave, w / 2, 530);
 
-  // Nota
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
   ctx.fillStyle = "#3f745f";
   ctx.font = "500 40px Poppins, system-ui, -apple-system, Segoe UI, Roboto, Arial";
   ctx.fillText("Guardala: la vas a usar junto con tu DNI.", 120, 760);
 
-  // Descargar
   const a = document.createElement("a");
   a.href = canvas.toDataURL("image/png");
   a.download = `amaranta-clave-${clave}.png`;
