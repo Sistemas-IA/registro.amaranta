@@ -2,15 +2,29 @@
 <html lang="es">
 <head>
   <meta charset="utf-8"/>
-  <meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
-  <title>Autorregistro</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+
+  <title>Amaranta · Registro</title>
+  <meta name="description" content="Autorregistro de clientes de Amaranta."/>
+  <meta name="theme-color" content="#ffffff"/>
+
+  <!-- Favicon 🌿 (no es el mismo que la imagen al compartir) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9F%8C%BF%3C/text%3E%3C/svg%3E"/>
+
+  <!-- Open Graph / Twitter (para WhatsApp, etc.) -->
+  <meta property="og:locale" content="es_AR"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:title" content="Amaranta · Registro"/>
+  <meta property="og:description" content="Completá tus datos para registrarte."/>
+  <meta property="og:url" content="https://registro.amaranta.ar/"/>
+  <meta property="og:image" content="https://registro.amaranta.ar/assets/encabezado.png"/>
+  <meta name="twitter:card" content="summary_large_image"/>
 
   <script src="https://www.google.com/recaptcha/api.js?render=6Le2sYMrAAAAABmpey7GOWmQHVua3PxJ5gnHsbGp"></script>
-  <link href="https://fonts.googleapis.com" rel="preconnect"/>
-  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
 
-  <meta content="#2d5246" name="theme-color"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 
   <style>
     :root{
@@ -85,10 +99,7 @@
       border-color:var(--green-700);
       box-shadow:0 0 0 .22rem var(--ring);
     }
-    .invalid{
-      border-color:var(--error)!important;
-      box-shadow:0 0 0 .22rem rgba(196,69,54,.15)!important
-    }
+    .invalid{border-color:var(--error)!important;box-shadow:0 0 0 .22rem rgba(196,69,54,.15)!important}
     .error{
       color:var(--error);
       font-size:.85rem;
@@ -118,9 +129,20 @@
     button:active{transform:translateY(1px)}
     button[disabled]{opacity:.7;cursor:progress}
 
-    /* ===== MODAL (mobile-friendly) ===== */
+    /* Honeypot invisible (pero NO hidden type, para atrapar bots) */
+    .hp{
+      position:absolute;
+      left:-10000px;
+      top:auto;
+      width:1px;
+      height:1px;
+      overflow:hidden;
+    }
+
+    /* Modal (actualizado) */
     #modal{
-      position:fixed; inset:0;
+      position:fixed;
+      inset:0;
       display:none;
       align-items:center;
       justify-content:center;
@@ -128,49 +150,60 @@
       z-index:9999;
       padding:16px;
     }
-    #modal-box{
-      width:min(92vw, 380px);
+    .modal-card{
+      position:relative;
       background:#fff;
       border-radius:12px;
-      padding:14px 14px 12px 14px;
-      box-shadow:0 10px 30px rgba(0,0,0,.18);
-      position:relative;
+      padding:1rem 1.25rem;
+      width:min(92vw, 360px);
       text-align:center;
+      box-shadow:0 10px 30px rgba(0,0,0,.18);
     }
     #modal-x{
-      position:absolute; right:10px; top:8px;
-      width:36px; height:36px;
+      position:absolute;
+      right:10px;
+      top:10px;
+      width:36px;
+      height:36px;
       border-radius:10px;
       border:1px solid #dfe7e2;
       background:#fff;
       color:var(--ink);
+      font-weight:700;
       cursor:pointer;
-      display:flex; align-items:center; justify-content:center;
-      font-size:18px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:none;
+      padding:0;
+      min-height:auto;
     }
     #modal-title{
-      font-weight:700;
-      margin:2px 0 6px 0;
-      color:var(--green-900);
+      margin:6px 0 10px 0;
+      font-size:18px;
+      font-weight:600;
+      color:var(--ink);
     }
-    #modal-msg{
-      margin:0;
-      color:var(--green-800);
-      font-size:.95rem;
+    .modal-sub{
+      margin:0 0 10px 0;
+      font-size:13px;
+      color:#4d635a;
     }
     #modal-clave{
-      margin:10px 0 8px 0;
-      font-weight:800;
-      font-size:22px;
-      letter-spacing:.14em;
+      margin:10px auto 12px auto;
       padding:10px 12px;
-      border:1px dashed var(--green-300);
-      border-radius:10px;
-      background:#f6fbf8;
+      border:1px dashed #a8c4b3;
+      border-radius:12px;
+      background:#f4faf7;
+      font-size:22px;
+      font-weight:700;
+      letter-spacing:.08em;
+      color:var(--green-900);
+      width:fit-content;
+      min-width:180px;
     }
-    #modal-action{
+    #modal-save{
       width:100%;
-      margin-top:8px;
     }
 
     @media (min-width: 768px){
@@ -195,13 +228,13 @@
       <input id="apellido" name="apellido" type="text"/>
       <div class="error"></div>
 
-      <input id="dni" inputmode="numeric" name="dni" type="text"/>
+      <input id="dni" name="dni" inputmode="numeric" type="text"/>
       <div class="error"></div>
 
-      <input id="codigo" inputmode="numeric" name="codigo" type="text"/>
+      <input id="codigo" name="codigo" inputmode="numeric" type="text"/>
       <div class="error"></div>
 
-      <input id="numero" inputmode="numeric" name="numero" type="text"/>
+      <input id="numero" name="numero" inputmode="numeric" type="text"/>
       <div class="error"></div>
 
       <input id="email" name="email" type="email"/>
@@ -213,6 +246,13 @@
       <textarea id="comentarios" name="comentarios" rows="3"></textarea>
       <div class="error"></div>
 
+      <!-- Honeypot -->
+      <div class="hp" aria-hidden="true">
+        <label for="website">Website</label>
+        <input id="website" name="website" type="text" autocomplete="off" tabindex="-1"/>
+      </div>
+
+      <!-- reservado -->
       <input id="lista" name="lista" type="hidden" value=""/>
 
       <button id="btnEnviar" type="submit">Enviar</button>
@@ -221,12 +261,12 @@
 
   <!-- Modal -->
   <div id="modal" aria-hidden="true">
-    <div id="modal-box" role="dialog" aria-modal="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <button id="modal-x" type="button" aria-label="Cerrar">✕</button>
       <div id="modal-title">¡Registro enviado!</div>
-      <p id="modal-msg"></p>
+      <div class="modal-sub">Guardá tu clave: la vas a usar junto con tu DNI.</div>
       <div id="modal-clave"></div>
-      <button id="modal-action" type="button">Guardar clave y cerrar</button>
+      <button id="modal-save" type="button">Guardar clave y cerrar</button>
     </div>
   </div>
 
