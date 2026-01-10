@@ -8,10 +8,8 @@
   <meta name="description" content="Autorregistro de clientes de Amaranta."/>
   <meta name="theme-color" content="#ffffff"/>
 
-  <!-- Favicon 🌿 (no es el mismo que la imagen al compartir) -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9F%8C%BF%3C/text%3E%3C/svg%3E"/>
 
-  <!-- Open Graph / Twitter (para WhatsApp, etc.) -->
   <meta property="og:locale" content="es_AR"/>
   <meta property="og:type" content="website"/>
   <meta property="og:title" content="Amaranta · Registro"/>
@@ -129,7 +127,6 @@
     button:active{transform:translateY(1px)}
     button[disabled]{opacity:.7;cursor:progress}
 
-    /* Honeypot invisible (pero NO hidden type, para atrapar bots) */
     .hp{
       position:absolute;
       left:-10000px;
@@ -139,7 +136,6 @@
       overflow:hidden;
     }
 
-    /* Modal (actualizado) */
     #modal{
       position:fixed;
       inset:0;
@@ -246,25 +242,22 @@
       <textarea id="comentarios" name="comentarios" rows="3"></textarea>
       <div class="error"></div>
 
-      <!-- Honeypot -->
       <div class="hp" aria-hidden="true">
         <label for="website">Website</label>
         <input id="website" name="website" type="text" autocomplete="off" tabindex="-1"/>
       </div>
 
-      <!-- reservado -->
       <input id="lista" name="lista" type="hidden" value=""/>
 
       <button id="btnEnviar" type="submit">Enviar</button>
     </form>
   </section>
 
-  <!-- Modal -->
   <div id="modal" aria-hidden="true">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <button id="modal-x" type="button" aria-label="Cerrar">✕</button>
       <div id="modal-title">¡Registro enviado!</div>
-      <div class="modal-sub">Guardá tu clave: la vas a usar junto con tu DNI.</div>
+      <div id="modal-sub" class="modal-sub">Guardá tu clave: la vas a usar junto con tu DNI.</div>
       <div id="modal-clave"></div>
       <button id="modal-save" type="button">Guardar clave y cerrar</button>
     </div>
