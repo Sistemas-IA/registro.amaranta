@@ -91,6 +91,13 @@
       transition:border-color .12s ease, box-shadow .12s ease;
     }
     textarea{min-height:88px}
+
+    /* Dirección: 2 líneas para que el placeholder se lea completo */
+    #direccion{
+      min-height:64px;
+      resize:none;
+    }
+
     input::placeholder,textarea::placeholder{color:#8aa295}
     input:focus,textarea:focus,select:focus{
       outline:none;
@@ -236,7 +243,8 @@
       <input id="email" name="email" type="email"/>
       <div class="error"></div>
 
-      <input id="direccion" name="direccion" type="text"/>
+      <!-- CAMBIO QUIRÚRGICO: dirección pasa a textarea para ver placeholder en 2 líneas -->
+      <textarea id="direccion" name="direccion" rows="2"></textarea>
       <div class="error"></div>
 
       <textarea id="comentarios" name="comentarios" rows="3"></textarea>
