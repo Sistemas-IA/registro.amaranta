@@ -4,7 +4,7 @@ const UI_TEXT = {
     nombre: "👤 Nombre",
     apellido: "👤 Apellido",
     dni: "🪪 DNI (sin puntos)",
-    codigo: "📞 Cod. área (sin 0)",
+    codigo: "📞 Cod. área celular (2 a 4 dígitos, sin 0)",
     numero: "📞 Número de celular (6 a 8 dígitos, sin 15)",
     email: "📧 Correo electrónico",
     direccion: "📍 Dirección de entrega (generalmente tu trabajo) o escribí: retiro por el local",
