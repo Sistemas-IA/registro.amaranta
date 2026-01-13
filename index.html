@@ -220,31 +220,46 @@
 
 <body>
   <section class="card">
-    <form id="form" novalidate>
+    <form id="form" novalidate autocomplete="on">
       <div class="form-header">
         <img alt="Amaranta - Cocina Natural" decoding="async" loading="lazy" src="assets/encabezado.png"/>
       </div>
 
-      <input id="nombre" name="nombre" type="text"/>
+      <input id="nombre" name="nombre" type="text" autocomplete="given-name"/>
       <div class="error"></div>
 
-      <input id="apellido" name="apellido" type="text"/>
+      <input id="apellido" name="apellido" type="text" autocomplete="family-name"/>
       <div class="error"></div>
 
-      <input id="dni" name="dni" inputmode="numeric" type="text"/>
+      <input id="dni" name="dni" inputmode="numeric" type="text" autocomplete="off" maxlength="8"/>
       <div class="error"></div>
 
-      <input id="codigo" name="codigo" inputmode="numeric" type="text"/>
+      <!-- CAMBIO CLAVE anti-autofill: name="tel_area" + autocomplete tel-area-code -->
+      <input
+        id="codigo"
+        name="tel_area"
+        inputmode="numeric"
+        type="text"
+        autocomplete="section-amaranta tel-area-code"
+        maxlength="4"
+      />
       <div class="error"></div>
 
-      <input id="numero" name="numero" inputmode="numeric" type="text"/>
+      <!-- CAMBIO CLAVE anti-autofill: name="tel_num" + autocomplete tel-local -->
+      <input
+        id="numero"
+        name="tel_num"
+        inputmode="numeric"
+        type="text"
+        autocomplete="section-amaranta tel-local"
+        maxlength="8"
+      />
       <div class="error"></div>
 
-      <input id="email" name="email" type="email"/>
+      <input id="email" name="email" type="email" autocomplete="email"/>
       <div class="error"></div>
 
-      <!-- CAMBIO QUIRÚRGICO: dirección pasa a textarea para ver placeholder en 2 líneas -->
-      <textarea id="direccion" name="direccion" rows="2"></textarea>
+      <textarea id="direccion" name="direccion" rows="2" autocomplete="address-line1"></textarea>
       <div class="error"></div>
 
       <textarea id="comentarios" name="comentarios" rows="3"></textarea>
