@@ -5,7 +5,7 @@ const UI_TEXT = {
     apellido: "👤 Apellido",
     dni: "🪪 DNI (sin puntos)",
     codigo: "📞 Cod. área (sin 0)",
-    numero: "📞 Número de celular (sin 15)",
+    numero: "📞 Número de celular (6 a 8 dígitos, sin 15)",
     email: "📧 Correo electrónico",
     direccion: "📍 Dirección de entrega (generalmente tu trabajo) o escribí: retiro por el local",
     comentarios: "✏️ [OPCIONAL] Aclaraciones para encontar la dirección (nombre del lugar, piso, dpto/oficina ...)",
@@ -14,9 +14,9 @@ const UI_TEXT = {
     required: "Este campo es obligatorio",
     nombre: "Solo letras y espacios",
     apellido: "Solo letras y espacios",
-    dni: "7-8 dígitos (sin 0 inicial)/ sin puntos",
-    codigo: "2-4 dígitos",
-    numero: "6-9 dígitos",
+    dni: "7-8 dígitos (sin 0 inicial) / sin puntos",
+    codigo: "2-4 dígitos (sin 0 inicial)",
+    numero: "6 a 8 dígitos (sin 15 y sin 0 inicial)",
     email: "Correo inválido",
     direccion: "Máx. 100 caracteres",
     comentarios: "Máx. 250 caracteres",
@@ -25,12 +25,22 @@ const UI_TEXT = {
   captchaFail: "reCAPTCHA falló, recargá la página",
 };
 
+const onlyDigits = (s) => String(s || "").replace(/\D+/g, "");
+
+/* ---------- VALIDACIONES ---------- */
 const RULES = {
   nombre: (v) => /^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]{2,50}$/.test(v),
   apellido: (v) => /^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]{2,50}$/.test(v),
-  dni: (v) => /^[1-9]\d{6,7}$/.test(v),
-  codigo: (v) => /^\d{2,4}$/.test(v),
-  numero: (v) => /^\d{6,9}$/.test(v),
+
+  // DNI: 7-8 dígitos, sin 0 inicial
+  dni: (v) => /^[1-9]\d{6,7}$/.test(onlyDigits(v)),
+
+  // Código de área: 2-4 dígitos, sin 0 inicial
+  codigo: (v) => /^[1-9]\d{1,3}$/.test(onlyDigits(v)),
+
+  // ✅ Celular: 6 a 8 dígitos, NO empieza con 15, NO empieza con 0
+  numero: (v) => /^(?!15)[1-9]\d{5,7}$/.test(onlyDigits(v)),
+
   email: (v) => v.length <= 100 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
   direccion: (v) => v.length > 0 && v.length <= 100,
   comentarios: (v) => v.length <= 250, // opcional
@@ -78,6 +88,14 @@ form.addEventListener("submit", async (e) => {
     if (!token) throw new Error(UI_TEXT.captchaFail);
 
     const payload = Object.fromEntries(new FormData(form).entries());
+
+    // ✅ Compat: el HTML ahora manda tel_area / tel_num.
+    // Convertimos a codigo / numero para el backend.
+    payload.codigo = (payload.codigo ?? payload.tel_area ?? "").toString();
+    payload.numero = (payload.numero ?? payload.tel_num ?? "").toString();
+    delete payload.tel_area;
+    delete payload.tel_num;
+
     payload.recaptchaToken = token;
 
     const resp = await fetch("/api/register", {
@@ -93,7 +111,6 @@ form.addEventListener("submit", async (e) => {
       throw new Error(msg || UI_TEXT.serverError);
     }
 
-    // OK
     lastClave = String(data.clave || "").trim();
     showSuccessModal(lastClave);
 
@@ -108,13 +125,10 @@ form.addEventListener("submit", async (e) => {
 });
 
 function buildNiceError(data) {
-  // Si el server manda duplicateTypes, armamos un mensaje clarito
   if (Array.isArray(data.duplicateTypes) && data.duplicateTypes.length) {
     const map = { DNI: "DNI", Email: "email", Celular: "celular" };
     const list = data.duplicateTypes.map((t) => map[t] || t).join(", ");
-    if (data.duplicateTypes.length === 1) {
-      return `Ese ${list} ya está registrado.`;
-    }
+    if (data.duplicateTypes.length === 1) return `Ese ${list} ya está registrado.`;
     return `Esos datos ya están registrados: ${list}.`;
   }
   return data.error || "";
@@ -125,7 +139,9 @@ function validate() {
   let ok = true;
 
   for (const field of form.elements) {
-    if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement))
+    if (
+      !(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement)
+    )
       continue;
 
     if (field.type === "hidden") continue;
@@ -199,21 +215,11 @@ function closeModal() {
   modalMode = "error";
 }
 
-/* X: mínima fricción.
-   - si es success y hay clave: intenta copiar (best-effort)
-   - cierra
-*/
 modalX.addEventListener("click", async () => {
-  if (modalMode === "success" && lastClave) {
-    await tryCopy(lastClave);
-  }
+  if (modalMode === "success" && lastClave) await tryCopy(lastClave);
   closeModal();
 });
 
-/* Botón:
-   - success: copia + baja imagen + cierra
-   - error: cierra
-*/
 modalBtn.addEventListener("click", async () => {
   if (modalMode === "success" && lastClave) {
     await tryCopy(lastClave);
@@ -222,7 +228,6 @@ modalBtn.addEventListener("click", async () => {
   closeModal();
 });
 
-// clic fuera del card cierra (y copia si success)
 modal.addEventListener("click", async (e) => {
   if (e.target === modal) {
     if (modalMode === "success" && lastClave) await tryCopy(lastClave);
@@ -239,7 +244,7 @@ async function tryCopy(text) {
   }
 }
 
-/* PNG liviano */
+/* PNG */
 function downloadClaveImage(clave) {
   const w = 1080;
   const h = 1080;
