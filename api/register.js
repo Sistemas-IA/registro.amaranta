@@ -19,7 +19,6 @@ const UPSTASH_TOKEN = (process.env.UPSTASH_REDIS_REST_TOKEN || "").trim();
 
 /* =========================
    1) UPSTASH (solo rate-limit)
-   - Fail-open: si Upstash falla/no está, NO rompe el registro.
 ========================= */
 const redis =
   UPSTASH_URL && UPSTASH_TOKEN ? new Redis({ url: UPSTASH_URL, token: UPSTASH_TOKEN }) : null;
@@ -34,15 +33,10 @@ function makeLimiter(prefix, limit, window) {
   });
 }
 
-// IP: 5 envíos / 5 min
 const rlIp = makeLimiter("ip", 5, "5 m");
-// DNI: 3 envíos / 1 h
 const rlDni = makeLimiter("dni", 3, "1 h");
-// Email: 3 envíos / 1 h
 const rlEmail = makeLimiter("email", 3, "1 h");
-// Tel: 3 envíos / 1 h
 const rlTel = makeLimiter("tel", 3, "1 h");
-// Global: 100 envíos / 5 min
 const rlGlobal = makeLimiter("glob", 100, "5 m");
 
 async function limitOrPass(limiter, key) {
@@ -50,7 +44,6 @@ async function limitOrPass(limiter, key) {
   try {
     return await limiter.limit(String(key || ""));
   } catch {
-    // Fail-open
     return { success: true };
   }
 }
@@ -68,9 +61,12 @@ const sheets = google.sheets({ version: "v4", auth });
    3) VALIDACIONES
 ========================= */
 const RE_NAME = /^[\p{L}\p{M}](?:[\p{L}\p{M}\s'’-]){1,49}$/u; // 2..50
-const RE_DNI = /^[1-9]\d{6,7}$/; // 7-8 dígitos, sin 0 inicial
-const RE_COD = /^\d{2,4}$/;
-const RE_NUM = /^\d{6,9}$/;
+const RE_DNI = /^[1-9]\d{6,7}$/; // 7-8 sin 0 inicial
+const RE_COD = /^[1-9]\d{1,3}$/; // 2-4 sin 0 inicial
+
+// ✅ AHORA: 6 a 8 dígitos, sin 15 al inicio, sin 0 inicial
+const RE_NUM = /^(?!15)[1-9]\d{5,7}$/;
+
 const RE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RE_LISTA_1_50 = /^(?:[1-9]|[1-4]\d|50)$/;
 
@@ -78,7 +74,6 @@ const RE_LISTA_1_50 = /^(?:[1-9]|[1-4]\d|50)$/;
    4) HANDLER
 ========================= */
 export default async function handler(req, res) {
-  // CORS + preflight
   res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -92,7 +87,6 @@ export default async function handler(req, res) {
     req.socket?.remoteAddress ||
     "unknown";
 
-  // Global + IP rate limit (Upstash)
   if (!(await limitOrPass(rlGlobal, "global")).success) {
     await logFail({ ip, motivo: "Rate-limit global" });
     return res.status(503).json({ ok: false, error: "Servicio saturado, intentá en unos minutos." });
@@ -102,36 +96,33 @@ export default async function handler(req, res) {
     return res.status(429).json({ ok: false, error: "Demasiadas peticiones, intentá luego." });
   }
 
-  let ctx = { ip, dni: "", telefono: "", email: "" };
+  let ctx = { ip, dni: "", telefono: "", email: "", motivo: "" };
 
   try {
     const body = req.body || {};
 
-    // Honeypot
     const website = str(body.website);
     if (website) {
       ctx.motivo = "Honeypot";
       throw httpError(400, "Solicitud rechazada.");
     }
 
-    // Campos base (antes de normalizar)
     const nombre = str(body.nombre);
     const apellido = str(body.apellido);
     const dni = digits(body.dni);
-    const codigo = digits(body.codigo);
-    const numero = digits(body.numero);
-    const email = str(body.email).toLowerCase();
 
+    const codigo = digits(body.codigo || body.tel_area);
+    const numero = digits(body.numero || body.tel_num);
+
+    const email = str(body.email).toLowerCase();
     const direccion = str(body.direccion);
     const comentarios = str(body.comentarios);
     const lista = str(body.lista);
     const recaptchaToken = str(body.recaptchaToken);
 
-    // Contexto de log (ya con datos)
     ctx.dni = dni;
     ctx.email = email;
 
-    // Required
     if (!nombre) throw httpError(400, "Nombre es obligatorio.");
     if (!apellido) throw httpError(400, "Apellido es obligatorio.");
     if (!dni) throw httpError(400, "DNI es obligatorio.");
@@ -140,7 +131,6 @@ export default async function handler(req, res) {
     if (!email) throw httpError(400, "Email es obligatorio.");
     if (!direccion) throw httpError(400, "Dirección es obligatoria.");
 
-    // Format
     if (!RE_NAME.test(nombre)) throw httpError(400, "Nombre inválido.");
     if (!RE_NAME.test(apellido)) throw httpError(400, "Apellido inválido.");
     if (!RE_DNI.test(dni)) throw httpError(400, "DNI inválido.");
@@ -151,11 +141,9 @@ export default async function handler(req, res) {
     if (comentarios.length > 250) throw httpError(400, "Comentarios demasiado largos (máx 250).");
     if (lista && !RE_LISTA_1_50.test(lista)) throw httpError(400, "Lista inválida (1 a 50).");
 
-    // Tel normalizado
     const telefono = canonTel("549" + codigo + numero);
     ctx.telefono = telefono;
 
-    // Rate-limit por identidad (separados)
     if (dni && !(await limitOrPass(rlDni, dni)).success) {
       ctx.motivo = "Rate-limit DNI";
       throw httpError(429, "Demasiados intentos con ese DNI. Probá más tarde.");
@@ -169,14 +157,12 @@ export default async function handler(req, res) {
       throw httpError(429, "Demasiados intentos con ese celular. Probá más tarde.");
     }
 
-    // reCAPTCHA v3
     const score = await verifyCaptcha(recaptchaToken, ip);
     if (score < 0.5) {
       ctx.motivo = `reCAPTCHA score=${score}`;
       throw httpError(400, "reCAPTCHA rechazó la solicitud.");
     }
 
-    // Sanitización (Sheets-safe)
     const safeNombre = sanitize(nombre);
     const safeApellido = sanitize(apellido);
     const safeDni = sanitize(dni);
@@ -185,7 +171,6 @@ export default async function handler(req, res) {
     const safeComentarios = sanitize(comentarios.slice(0, 250));
     const safeLista = sanitize(lista.slice(0, 50));
 
-    // Duplicados en Sheets (C:D:E = DNI/Tel/Email)
     const existing = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${SHEET_NAME}!C2:E`,
@@ -229,26 +214,24 @@ export default async function handler(req, res) {
       throw e;
     }
 
-    // Clave LLNNLL (sin unicidad forzada)
     const clave = generateClave();
 
-    // Append A:O (15 cols)
     const fila = [
-      safeNombre,              // A Nombre
-      safeApellido,            // B Apellido
-      safeDni,                 // C DNI
-      telefono,                // D Telefono
-      safeEmail,               // E Email
-      safeDireccion,           // F Direccion
-      safeComentarios,         // G Comentarios
-      "Z-00",                  // H Zona
-      "Pendiente",             // I Estado
-      safeLista,               // J Lista
-      new Date().toISOString(),// K Timestamp
-      ip,                      // L IP
-      clave,                   // M Clave
-      0,                       // N Grupo
-      "",                      // O Contadores
+      safeNombre,               // A
+      safeApellido,             // B
+      safeDni,                  // C
+      telefono,                 // D
+      safeEmail,                // E
+      safeDireccion,            // F
+      safeComentarios,          // G
+      "Z-00",                   // H
+      "Pendiente",              // I
+      safeLista,                // J
+      new Date().toISOString(), // K
+      ip,                       // L
+      clave,                    // M
+      0,                        // N
+      "",                       // O
     ];
 
     await sheets.spreadsheets.values.append({
@@ -272,7 +255,6 @@ export default async function handler(req, res) {
       motivo: ctx.motivo ? `${ctx.motivo} | ${msg}` : msg,
     });
 
-    // si es duplicado, devolvemos también types
     const payload = { ok: false, error: msg };
     if (Array.isArray(err?.duplicateTypes)) payload.duplicateTypes = err.duplicateTypes;
 
@@ -319,7 +301,6 @@ function canonTel(v) {
   return d.startsWith("549") ? d : "549" + d;
 }
 
-// Evita fórmula en Sheets + limpia tags
 function sanitize(v = "") {
   return String(v)
     .trim()
@@ -327,7 +308,6 @@ function sanitize(v = "") {
     .replace(/[<>]/g, "");
 }
 
-// LLNNLL (sin O y sin 0)
 function generateClave() {
   const L = "ABCDEFGHIJKLMNPQRSTUVWXYZ";
   const D = "123456789";
@@ -362,10 +342,15 @@ async function logFail({ ip = "", dni = "", telefono = "", email = "", motivo = 
       range: `${FAIL_SHEET}!A:F`,
       valueInputOption: "RAW",
       requestBody: {
-        values: [[new Date().toISOString(), ip, String(dni), String(telefono), String(email), String(motivo).slice(0, 200)]],
+        values: [[
+          new Date().toISOString(),
+          ip,
+          String(dni),
+          String(telefono),
+          String(email),
+          String(motivo).slice(0, 200)
+        ]],
       },
     });
-  } catch {
-    // no-op
-  }
+  } catch {}
 }
