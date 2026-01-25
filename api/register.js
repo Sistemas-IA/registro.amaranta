@@ -234,13 +234,20 @@ export default async function handler(req, res) {
       "",                       // O
     ];
 
-    await sheets.spreadsheets.values.append({
+    const appendRes = await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
       range: `${SHEET_NAME}!A:O`,
       valueInputOption: "RAW",
       insertDataOption: "INSERT_ROWS",
       requestBody: { values: [fila] },
     });
+
+    // ✅ CAMBIO QUIRÚRGICO: forzar DNI (columna C) como TEXTO en la fila recién insertada
+    try {
+      const updatedRange = appendRes?.data?.updates?.updatedRange;
+      const rowNumber = parseRowFromUpdatedRange(updatedRange);
+      if (rowNumber) await forceDniAsText(rowNumber, safeDni);
+    } catch {}
 
     return res.status(200).json({ ok: true, clave });
   } catch (err) {
@@ -332,6 +339,62 @@ async function verifyCaptcha(token, ip) {
 
   if (!r?.success) return 0;
   return Number(r?.score || 0);
+}
+
+// ======= SOLO PARA EL FIX DEL DNI (QUIRÚRGICO) =======
+function parseRowFromUpdatedRange(updatedRange) {
+  // Ej: Clientes!A1069:O1069  ó  'Clientes 2026'!A1069:O1069
+  const m = String(updatedRange || "").match(/(\d+)\s*$/);
+  return m ? Number(m[1]) : null;
+}
+
+async function getSheetIdByTitle(sheetTitle) {
+  const meta = await sheets.spreadsheets.get({
+    spreadsheetId: SPREADSHEET_ID,
+    fields: "sheets.properties",
+  });
+  const sh = (meta.data.sheets || []).find((s) => s?.properties?.title === sheetTitle);
+  const sheetId = sh?.properties?.sheetId;
+  return typeof sheetId === "number" ? sheetId : null;
+}
+
+async function forceDniAsText(rowNumber, dniValue) {
+  const sheetId = await getSheetIdByTitle(SHEET_NAME);
+  if (!sheetId || !rowNumber) return;
+
+  // 1) Forzar formato TEXTO en C{rowNumber}
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      requests: [
+        {
+          repeatCell: {
+            range: {
+              sheetId,
+              startRowIndex: rowNumber - 1,
+              endRowIndex: rowNumber,
+              startColumnIndex: 2, // C
+              endColumnIndex: 3,
+            },
+            cell: {
+              userEnteredFormat: {
+                numberFormat: { type: "TEXT" },
+              },
+            },
+            fields: "userEnteredFormat.numberFormat",
+          },
+        },
+      ],
+    },
+  });
+
+  // 2) Re-escribir DNI como string (por si Sheets lo interpretó como número al insertar)
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEET_NAME}!C${rowNumber}`,
+    valueInputOption: "RAW",
+    requestBody: { values: [[String(dniValue)]] },
+  });
 }
 
 // IntentosFallidos: Timestamp | IP | DNI | Telefono | Email | Motivo
